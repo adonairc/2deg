@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <fftw3.h>
-
+#include<algorithm>
 template<typename T>
 std::vector<double> linspace(T start_in, T end_in, int num_in)
 {

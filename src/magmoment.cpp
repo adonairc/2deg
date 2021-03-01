@@ -1013,9 +1013,11 @@ int main (int argc, char* argv[])
     std::ofstream fcur;
     fcur.open(filename);
 
-    double kinitial = 0.001;
+    double kinitial = -sqrt(2.0)*k0;
     std::vector<double> kes = linspace(kinitial,kfinal,EnergyPoints);
     double dE = (kes[1]*kes[1]-kes[0]*kes[0])/(2.0*13.097767*eff_mass);
+
+    std::cout << "dE = " << dE << std::endl;
   
           
     for( double x: xs){
@@ -1033,7 +1035,7 @@ int main (int argc, char* argv[])
 
           params_t params = {r,theta_r,kes[i],tau};
 
-          //double E = ke*ke/(2.0*13.097767*eff_mass);
+          double E = ke*ke/(2.0*13.097767*eff_mass);
 
           // Energy dependent T-matrix in \hbar^{2}/m^{*}
           results_t greens_functions = computeGreensFunction(params);

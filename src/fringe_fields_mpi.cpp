@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <boost/mpi.hpp>
-
+#include<algorithm>
 namespace mpi = boost::mpi;
 
 
