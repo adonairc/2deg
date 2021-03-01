@@ -34,11 +34,17 @@ std::vector<double> linspace(T start_in, T end_in, int num_in)
 }
 
 
+
+
 int main (int argc, char* argv[])
 {
 
   int N,Nz;
-  std::vector<std::vector<double> > ms;
+  std::vector<std::vector<double> > js;
+  std::vector<double> dxjy;
+  std::vector<double> dyjx;
+  std::vector<double> jx;
+  std::vector<double> jy;
 
   // if (argc < 2) {
   //   printf("Error. Missing orbital magnetic moment file.");
@@ -75,17 +81,29 @@ int main (int argc, char* argv[])
       // mocking up
       // v[2] = 1.0;
       // v[2] = 1.0*exp(-(pow(v[0],2)+pow(v[1],2))/(2*pow(c,2)));
-      ms.push_back(v);
+      js.push_back(v);
       // std::cout << v[0] << ","  << v[1] << "," << v[2] << std::endl;
     }
   }
 
-  N = (int)sqrt(ms.size());
+  N = (int)sqrt(js.size());
   double max_x = *std::max_element(x_coords.begin(), x_coords.end());
   double min_x = *std::min_element(x_coords.begin(), x_coords.end());
 
   double max_y = *std::max_element(y_coords.begin(), y_coords.end());
   double min_y = *std::min_element(y_coords.begin(), y_coords.end());
+  double dx = abs(x_coords[1] - x_coords[0]);
+  double dy = abs(y_coords[1] - y_coords[0]);
+  // 
+
+  for (int i = 0; i < N-1; i++){
+    for (int j = 0; j < N-1; j++){
+      dxjy.push_back((js[j+N*(i+1)][3] - js[j+N*i][3])/dx);
+      dyjx.push_back((js[(j+1)+N*i][2] - js[j+N*i][2])/dy);
+      jx.push_back(js[j+N*i][2]);
+      jy.push_back(js[j+N*i][3]);
+    }
+  }
 
   // Test
   // N = 200;
@@ -114,23 +132,24 @@ int main (int argc, char* argv[])
 
   // Super-cell z dimension
   int Ncell = 101;
-  double min_x_cell = -5.0;
-  double max_x_cell = 5.0;
+  
+  double min_x_cell = -20.0;
+  double max_x_cell = 20.0;
 
   double d = 1.0;
 
-  double min_y_cell = -5.0;
-  double max_y_cell = 5.0;
+  double min_y_cell = -20.0;
+  double max_y_cell = 20.0;
 
   double min_z_cell = 0.0;
-  double max_z_cell = 5.0;
+  double max_z_cell = 3.0;
   
   std::vector<double> xs_cell = linspace(min_x_cell,max_x_cell,Ncell);
   std::vector<double> ys_cell = linspace(min_y_cell,max_x_cell,Ncell);
   std::vector<double> zs_cell = linspace(min_z_cell,max_z_cell,Ncell);
 
-  double dx = abs(xs_cell[1]-xs_cell[0]);
-  double dy = abs(ys_cell[1]-ys_cell[0]);
+  dx = abs(xs_cell[1]-xs_cell[0]);
+  dy = abs(ys_cell[1]-ys_cell[0]);
   double dz = abs(zs_cell[1]-zs_cell[0]);
 
   // // X-Z plane
@@ -158,9 +177,9 @@ int main (int argc, char* argv[])
   // }
 
   // X-Y plane
-  double z = 2;
+  double height = 2.0;
   int k = -1;
-  while (zs_cell[k+1] < z){
+  while (zs_cell[k+1] < height){
     k++;
   }
   
@@ -168,25 +187,69 @@ int main (int argc, char* argv[])
   for (int i = 0; i < Ncell-1; i++) {
     for (int j = 0; j < Ncell-1; j++) {
 
-        double phi = 0.0;
-        double phi_dx = 0.0;
-        double phi_dy = 0.0;
-        double phi_dz = 0.0;
+      double phi = 0.0;
+      double phi_dx = 0.0;
+      double phi_dy = 0.0;
+      double phi_dz = 0.0;
+     
+      double x = xs_cell[i];
+      double y = ys_cell[j];
 
-        for (auto m: ms){
-          //
-          phi += -(1.0/(4.0*M_PI)*m[2]*dx*dy*(1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k]+d/2.0,2)) - 1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k]-d/2.0,2))));
-          phi_dx += -(1.0/(4.0*M_PI)*m[2]*dx*dy*(1.0/sqrt(pow(xs_cell[i+1]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k]+d/2.0,2)) - 1.0/sqrt(pow(xs_cell[i+1]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k]-d/2.0,2))));
-          phi_dy += -(1.0/(4.0*M_PI)*m[2]*dx*dy*(1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j+1]-m[1],2)+pow(zs_cell[k]+d/2.0,2)) - 1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j+1]-m[1],2)+pow(zs_cell[k]-d/2.0,2))));
-          phi_dz += -(1.0/(4.0*M_PI)*m[2]*dx*dy*(1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k+1]+d/2.0,2)) - 1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k+1]-d/2.0,2))));
+      double xp, yp;
+
+      for (int ip = 0; ip < N -1; ip++){
+        for (int jp = 0; jp < N - 1; jp++){
+          double z = zs_cell[k];
+          xp = x_coords[jp+N*ip];
+          yp = y_coords[jp+N*ip];
+          // F1
+          phi += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)));
+          // F2
+          //phi += (dyjx[jp + N*ip] - dxjy[jp + N*ip])*(1.0/(pow(x-xp,2) + pow(y-yp,2)))*( sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)) -  sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) + z*asinh((0.5*d - z)/sqrt(pow(x-xp,2)+pow(y-yp,2))) + z*asinh((0.5*d + z)/sqrt(pow(x-xp,2)+pow(y-yp,2))));
+
+
+          xp = x_coords[jp+N*(ip+1)];
+          yp = y_coords[jp+N*(ip+1)];
+          // F1
+          phi_dx += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)));
+          // F2
+          //phi_dx += (dyjx[jp + N*ip] - dxjy[jp + N*ip])*(1.0/(pow(x-xp,2) + pow(y-yp,2)))*( sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)) -  sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) + z*asinh((0.5*d - z)/sqrt(pow(x-xp,2)+pow(y-yp,2))) + z*asinh((0.5*d + z)/sqrt(pow(x-xp,2)+pow(y-yp,2))));
+
+
+
+          xp = x_coords[(jp+1)+N*ip];
+          yp = y_coords[(jp+1)+N*ip];
+          // F1
+          phi_dy += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)));
+          // F2
+          //phi_dy += (dyjx[jp + N*ip] - dxjy[jp + N*ip])*(1.0/(pow(x-xp,2) + pow(y-yp,2)))*( sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)) -  sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) + z*asinh((0.5*d - z)/sqrt(pow(x-xp,2)+pow(y-yp,2))) + z*asinh((0.5*d + z)/sqrt(pow(x-xp,2)+pow(y-yp,2))));
+
+
+          z = zs_cell[k+1];
+          xp = x_coords[jp+N*ip];
+          yp = y_coords[jp+N*ip];
+          // F1
+          phi_dz += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)));
+          // F2
+          //phi_dz += (dyjx[jp + N*ip] - dxjy[jp + N*ip])*(1.0/(pow(x-xp,2) + pow(y-yp,2)))*( sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)) -  sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) + z*asinh((0.5*d - z)/sqrt(pow(x-xp,2)+pow(y-yp,2))) + z*asinh((0.5*d + z)/sqrt(pow(x-xp,2)+pow(y-yp,2))));
+
         }
-
-        double bx = -(phi_dx - phi)/dx;
-        double by = -(phi_dy - phi)/dy;
-        double bz = -(phi_dz - phi)/dz;
-        field << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx*bx + by*by + bz*bz) << std::endl;
       }
+      double bx = -(phi_dx - phi)/dx;
+      double by = -(phi_dy - phi)/dy;
+      double bz = -(phi_dz - phi)/dz;
+      field << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx*bx + by*by + bz*bz) << std::endl;
+    }
   }
+
+
+        // for (auto m: js){
+        //   //
+        //   phi += -(1.0/(4.0*M_PI)*m[2]*dx*dy*(1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k]+d/2.0,2)) - 1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k]-d/2.0,2))));
+        //   phi_dx += -(1.0/(4.0*M_PI)*m[2]*dx*dy*(1.0/sqrt(pow(xs_cell[i+1]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k]+d/2.0,2)) - 1.0/sqrt(pow(xs_cell[i+1]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k]-d/2.0,2))));
+        //   phi_dy += -(1.0/(4.0*M_PI)*m[2]*dx*dy*(1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j+1]-m[1],2)+pow(zs_cell[k]+d/2.0,2)) - 1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j+1]-m[1],2)+pow(zs_cell[k]-d/2.0,2))));
+        //   phi_dz += -(1.0/(4.0*M_PI)*m[2]*dx*dy*(1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k+1]+d/2.0,2)) - 1.0/sqrt(pow(xs_cell[i]-m[0],2)+pow(ys_cell[j]-m[1],2)+pow(zs_cell[k+1]-d/2.0,2))));
+        // }
   field.close();
 
 

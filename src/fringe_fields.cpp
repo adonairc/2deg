@@ -42,7 +42,7 @@ int main (int argc, char* argv[])
   std::vector<std::vector<double> > ms;
 
   if (argc < 2) {
-    printf("Error. Missing orbital magnetic moment file.");
+    printf("Error. Missing current file.");
     exit(1);
   }
 

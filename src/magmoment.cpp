@@ -834,10 +834,21 @@ results_t computeGreensFunctionLDOS(params_t params){
 
 // }
 
+//
+// Fermi-Dirac distribution function
+//
+// k = 8.617333262145×10−5 eV.K^{-1}
+
+double fermi(double ke, double kf, double eff_mass, double beta){
+  // ke*ke/(2.0*eff_mass*13.097767) = E;
+  // kf*kf/(2.0*eff_mass*13.097767) = E;
+  return 1.0/(exp(beta*((ke*ke/(2.0*eff_mass*13.097767))-(kf*kf/(2.0*eff_mass*13.097767))))+1.0);
+}
 int main (int argc, char* argv[])
 {
   int Nx,Ny,Nz, Nt,EnergyPoints;
-  double ratio,tau,initial_coord,final_coord,kef;
+  double beta = 38.0;
+  double ratio,tau,initial_coord,final_coord,kef,kfinal;
   double eff_mass,Ed,Eu,G,Ef;
   bool calc_line, calc_density,calc_total,calc_current,calc_current_int,calc_volume,calc_ldos;
   std::complex<double> t_up,t_dn;
@@ -865,20 +876,22 @@ int main (int argc, char* argv[])
       ("help","Print program options")
       ("x-coords,x",po::value<std::vector<double>>(&x_coords)->multitoken()->required(),"X coordinates in nm (e.g -x -10 10)")
       ("y-coords,y",po::value<std::vector<double>>(&y_coords)->multitoken()->required(),"Y coordinates in nm (e.g -y -10 10)")
-      ("z-coords,z",po::value<std::vector<double>>(&z_coords)->multitoken()->required(),"Z coordinates in nm (e.g -z -10 10)")
+      ("z-coords,z",po::value<std::vector<double>>(&z_coords)->multitoken(),"Z coordinates in nm (e.g -z -10 10)")
       ("Nx", po::value<int>(&Nx)->required(), "Number of grid points along x-axis")
       ("Ny", po::value<int>(&Ny)->required(), "Number of grid points along y-axis")
-      ("Nz", po::value<int>(&Nz)->required(), "Number of grid points along z-axis")
+      ("Nz", po::value<int>(&Nz), "Number of grid points along z-axis")
       ("Nt", po::value<int>(&Nt), "Number of angular points (theta)")
       ("Ne", po::value<int>(&EnergyPoints)->required(), "Energy points")
-      ("Ef", po::value<double>(&Ef)->required(), "Fermi energy (eV)")
-      ("effective-mass,m", po::value<double>(&eff_mass)->required(), "Electron effective mass")
+      ("Ef", po::value<double>(&Ef), "Fermi energy (eV)")
+      ("effective-mass,m", po::value<double>(&eff_mass), "Electron effective mass")
       ("ratio,r", po::value<double>(&ratio), "Spin-orbit strength ratio (alpha/beta)")
       ("tau,t", po::value<double>(&tau), "Spin-orbit strength phase (tau)")
       ("k0", po::value<double>(&k0)->required(), "Spin-orbit wave-vector (1/nm)")
-      ("broadening,g", po::value<double>(&G)->required(), "Broadening energy (eV)")
-      ("e_up", po::value<double>(&Eu)->required(), "Impurity resonance energy for spin up (eV)")
-      ("e_dn", po::value<double>(&Ed)->required(), "Impurity resonance energy for spin down (eV)")
+      ("kef", po::value<double>(&kef), "Fermi wave-vector (1/nm)")
+      ("kfinal", po::value<double>(&kfinal), "Final wave-vector (1/nm)")
+      ("broadening,g", po::value<double>(&G), "Broadening energy (eV)")
+      ("e_up", po::value<double>(&Eu), "Impurity resonance energy for spin up (eV)")
+      ("e_dn", po::value<double>(&Ed), "Impurity resonance energy for spin down (eV)")
       ("line", po::bool_switch(&calc_line), "Calculate line plot of magnetization (angularly integrated)")
       ("density", po::bool_switch(&calc_density), "Calculate density plot of magnetization")
       ("current", po::bool_switch(&calc_current), "Calculate local current")
@@ -900,10 +913,16 @@ int main (int argc, char* argv[])
     tau = std::atan(ratio);
   }
 
-
-  // Converts Fermi energy to wave-number in units of 1/nm
-  kef = sqrt(2.0*eff_mass*13.097767*Ef); // m_0/\hbar^{2} = 13.097767 eV^{-1}nm^{-2}
-
+  // if (!vm.count("kf")){
+  //   if(vm.count("Ef") && vm.count("effective-mass")){
+  //     // Converts Fermi energy to wave-number in units of 1/nm
+  //     kef = sqrt(2.0*eff_mass*13.097767*Ef); // m_0/\hbar^{2} = 13.097767 eV^{-1}nm^{-2}
+  //   } else {
+  //     std::cout << "Erro - some energy parameter must be specified!";
+  //     return 1;
+  //   }
+  // }
+  
   
   gsl_set_error_handler_off();
   // gsl_set_error_handler (&error_handler);
@@ -932,24 +951,17 @@ int main (int argc, char* argv[])
 
   // Model parameters
   // int EnergyPoints = 50;
-  double kei = 0.001;
-  // double kef = 1.2; // in units of k0
-  std::vector<double> kes = linspace(kei,kef,EnergyPoints);
 
 
-  double dE = (kes[1]*kes[1]-kes[0]*kes[0])/(2.0*13.097767*eff_mass) ;
-  std::vector<std::complex<double> > t_ups;
-  std::vector<std::complex<double> > t_dns;
+  // for (int i = 0; i < EnergyPoints; i++){
+  //   // double E = ke*ke/(2.0*13.097767*eff_mass);
+  //   // Energy dependent T-matrix in \hbar^{2}/m^{*}
 
-  for (int i = 0; i < EnergyPoints; i++){
-    // double E = ke*ke/(2.0*13.097767*eff_mass);
-    // Energy dependent T-matrix in \hbar^{2}/m^{*}
+  //   t_ups.push_back(-ii*(1.0 + std::exp(std::complex<double>(0, 2)*atan(((kes[i]*kes[i]/(2.0*13.097767*eff_mass))-Eu)/G))));
+  //   t_dns.push_back(-ii*(1.0 + std::exp(std::complex<double>(0, 2)*atan(((kes[i]*kes[i]/(2.0*13.097767*eff_mass))-Ed)/G))));
+  //   // t_dns.push_back(std::complex<double>(0, 0));
 
-    t_ups.push_back(-ii*(1.0 + std::exp(std::complex<double>(0, 2)*atan(((kes[i]*kes[i]/(2.0*13.097767*eff_mass))-Eu)/G))));
-    t_dns.push_back(-ii*(1.0 + std::exp(std::complex<double>(0, 2)*atan(((kes[i]*kes[i]/(2.0*13.097767*eff_mass))-Ed)/G))));
-    // t_dns.push_back(std::complex<double>(0, 0));
-
-  }
+  // }
   
   // Down - delta = 0 -> t_dn = 0
   // Up  - delta pi/2 -> t_up = -2i
@@ -976,12 +988,12 @@ int main (int argc, char* argv[])
   std::cout << "kef : "<< kef << std::endl;
   std::cout << "grid size :  [" << Nx << "," << Ny << "," << Nz <<"] points"<< std::endl;
   std::cout << "energy integration points : "<< EnergyPoints << std::endl;
-  std::cout << "[";
-  for (auto ke: kes){
-    std::cout << ke*ke/(2.0*13.097767*eff_mass) << " ";
-  }
+  // std::cout << "[";
+  // for (auto ke: kes){
+  //   std::cout << ke*ke/(2.0*13.097767*eff_mass) << " ";
+  // }
   std::cout << "]" << std::endl;
-  std::cout << "dE = " << dE << " eV" << std::endl;
+  // std::cout << "dE = " << dE << " eV" << std::endl;
   std::cout << "x :  [" << xi << "," << xf << "] (nm)"<< std::endl;
   std::cout << "y :  [" << yi << "," << yf << "] (nm) "<< std::endl;
   std::cout << "z :  [" << zi << "," << zf << "] (nm) "<< std::endl;
@@ -1000,6 +1012,10 @@ int main (int argc, char* argv[])
     std::string filename = "current_energy_integrated_r_"+std::to_string(ratio)+".dat";
     std::ofstream fcur;
     fcur.open(filename);
+
+    double kinitial = 0.001;
+    std::vector<double> kes = linspace(kinitial,kfinal,EnergyPoints);
+    double dE = (kes[1]*kes[1]-kes[0]*kes[0])/(2.0*13.097767*eff_mass);
   
           
     for( double x: xs){
@@ -1020,8 +1036,6 @@ int main (int argc, char* argv[])
           //double E = ke*ke/(2.0*13.097767*eff_mass);
 
           // Energy dependent T-matrix in \hbar^{2}/m^{*}
-          t_up = t_ups[i];
-          t_dn = t_dns[i];
           results_t greens_functions = computeGreensFunction(params);
           std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
           std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);
@@ -1050,11 +1064,12 @@ int main (int argc, char* argv[])
           J_r +=  (J_r_grad + J_r_so)*dE;
           J_theta +=  (J_theta_grad + J_theta_so)*dE;
 
-          // double J_x = J_r*cos(theta_r) - J_theta*sin(theta_r);
-          // double J_y = J_r*sin(theta_r) + J_theta*cos(theta_r);
+         
                     
         }
-        fcur << r << "," << theta_r << "," << J_r << "," << J_theta << std::endl;
+        double J_x = J_r*cos(theta_r) - J_theta*sin(theta_r);
+        double J_y = J_r*sin(theta_r) + J_theta*cos(theta_r);
+        fcur << x << "," << y << "," << J_x << "," << J_y << std::endl;
       }
     }
     std::cout << "Energy-integrated current density was written in " << filename << std::endl;
@@ -1080,10 +1095,10 @@ int main (int argc, char* argv[])
     // double yf = final_coord;
     // std::vector<double> yvec = linspace(yi,yf,25);
 
-    double ke = sqrt((2.0*eff_mass)*Ef/0.076348);
-    // Energy dependent T-matrix in \hbar^{2}/m^{*}
-    t_up = -(ii + std::exp(std::complex<double>(0, 2)*atan((Ef-Eu)/G)));
-    t_dn = -(ii + std::exp(std::complex<double>(0, 2)*atan((Ef-Ed)/G)));
+    // double ke = sqrt((2.0*eff_mass)*Ef/0.076348);
+    // // Energy dependent T-matrix in \hbar^{2}/m^{*}
+    // t_up = -(ii + std::exp(std::complex<double>(0, 2)*atan((Ef-Eu)/G)));
+    // t_dn = -(ii + std::exp(std::complex<double>(0, 2)*atan((Ef-Ed)/G)));
 
     for( double x: xs){
       for (double y: ys){
@@ -1091,7 +1106,7 @@ int main (int argc, char* argv[])
         double r = sqrt(pow(x,2)+pow(y,2));
         double theta_r = atan2(y,x);
 
-        params_t params = {r,theta_r,ke,tau};
+        params_t params = {r,theta_r,kef,tau};
 
         results_t greens_functions = computeGreensFunction(params);
         std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
@@ -1136,16 +1151,19 @@ int main (int argc, char* argv[])
 
   // Line plot
   if (calc_line){
-    std::cout << "Nt = " << Nt << std::endl;
     std::cout << "Calculating magnetization line plot (angularly integrated)..." << std::endl;
     auto start = std::chrono::steady_clock::now(); 
     std::string filename_jint = "magmom_line_r_"+std::to_string(ratio)+".dat";
     std::ofstream fjint;
     fjint.open(filename_jint);
 
-    double ti = 0.0;
-    double tf = 2*M_PI;
-    std::vector<double> thetas = linspace(ti,tf,Nt);
+    double kinitial = 0.001;
+    std::vector<double> kes = linspace(kinitial,kfinal,EnergyPoints);
+    double dE = (kes[1]*kes[1]-kes[0]*kes[0])/(2.0*13.097767*eff_mass);
+ 
+    // double ti = 0.0;
+    // double tf = 2*M_PI;
+    // std::vector<double> thetas = linspace(ti,tf,Nt);
     
     for (double r: rs){
       double mz = 0.0;
@@ -1153,15 +1171,12 @@ int main (int argc, char* argv[])
       double msy = 0.0;
       double msz = 0.0;
       
-      for (double theta_r : thetas){
+      // for (double theta_r : thetas){
+        double theta_r = 0.0;
         double J_r = 0.0;
         double J_theta = 0.0;
         for (int i = 0; i < EnergyPoints; i++){          
-          params_t params = {r,theta_r,kes[i],tau};
-
-          // Energy dependent T-matrix in \hbar^{2}/m^{*}
-          t_up = t_ups[i];
-          t_dn = t_dns[i];
+          params_t params = {r,theta_r,kes[i],tau};          
 
           results_t greens_functions = computeGreensFunction(params);
           std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
@@ -1188,18 +1203,20 @@ int main (int argc, char* argv[])
           double J_theta_so = (-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
 
 
-          J_r +=  J_r_grad + J_r_so;
-          J_theta +=  J_theta_grad + J_theta_so;
+          // J_r +=  J_r_grad;
+          J_r +=   J_r_so;
+          // J_theta +=  J_theta_grad;
+          J_theta +=  J_theta_so;
 
-          msx += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up));
-          msy += (-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up));
-          msz += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up));
+          msx += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
+          msy += (-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          msz += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
 
 
-        }
+        // }
         double J_x = J_r*cos(theta_r) - J_theta*sin(theta_r);
         double J_y = J_r*sin(theta_r) + J_theta*cos(theta_r);
-        mz += (r*cos(theta_r)*J_y - r*sin(theta_r)*J_x);
+        mz += (r*cos(theta_r)*J_y - r*sin(theta_r)*J_x)*dE;
         // std::cout << mz  << std::endl; 
       }
       fjint << r << "," << mz  << "," << msx  << "," << msy  << "," << msz << std::endl; 
@@ -1223,6 +1240,13 @@ int main (int argc, char* argv[])
     double sum_orb  = 0.0;
     double sum_spin  = 0.0;
 
+    double e_initial = -2.0*k0*k0/(2.0*13.097767*eff_mass);
+    double e_final = kef*kef/(2.0*13.097767*eff_mass);
+
+    std::vector<double> energies = linspace(e_initial,e_final,EnergyPoints);
+    // double dE = (kes[1]*kes[1]-kes[0]*kes[0])/(2.0*13.097767*eff_mass);
+    double dE = abs(energies[1] - energies[0]);
+
     
     for( double x: xs){
       for (double y: ys){
@@ -1242,7 +1266,8 @@ int main (int argc, char* argv[])
        
 
         for (int i = 0; i < EnergyPoints; i++){
-          params_t params = {r,theta_r,kes[i],tau};
+          double k = sqrt(energies[i]*(2.0*13.097767*eff_mass));
+          params_t params = {r,theta_r,k,tau};
 
 
           // Energy dependent T-matrix in \hbar^{2}/m^{*}
@@ -1300,251 +1325,251 @@ int main (int argc, char* argv[])
     fspin.close();
   }
 
-  // Volume density plot
-  if (calc_volume){
-    std::cout << "Calculating volume density for orbital and spin magnetization..." << std::endl;
-    std::string filename = "magmom_vol_energy_integrated_r_"+std::to_string(ratio)+".dat";
-    std::string filename_spin = "spinmag_vol_energy_integrated_r_"+std::to_string(ratio)+".dat";
+  // // Volume density plot
+  // if (calc_volume){
+  //   std::cout << "Calculating volume density for orbital and spin magnetization..." << std::endl;
+  //   std::string filename = "magmom_vol_energy_integrated_r_"+std::to_string(ratio)+".dat";
+  //   std::string filename_spin = "spinmag_vol_energy_integrated_r_"+std::to_string(ratio)+".dat";
 
-    std::ofstream fmag;
-    std::ofstream fspin;
+  //   std::ofstream fmag;
+  //   std::ofstream fspin;
 
 
-    fmag.open(filename);
-    fspin.open(filename_spin);
+  //   fmag.open(filename);
+  //   fspin.open(filename_spin);
 
-    fmag << "#---------------[Parameters]---------------" << std::endl;
-    fmag << "# ratio : " << ratio << std::endl;
-    fmag << "# tau : " << tau << std::endl;
-    fmag << "# fermi energy : "<< Ef << " (eV)" << std::endl;
-    fmag << "# kf : "<< kef << " (1/nm)" << std::endl;
-    fmag << "# grid size :  [" << Nx << "," << Ny << "," << Nz <<"] points"<< std::endl;
-    fmag << "# energy integration points : "<< EnergyPoints << std::endl;
-    fmag << "# x :  [" << xi << "," << xf << "] (in units of nm)"<< std::endl;
-    fmag << "# y :  [" << yi << "," << yf << "] (in units of nm) "<< std::endl;
-    fmag << "# z :  [" << zi << "," << zf << "] (in units of nm) "<< std::endl;
-    fmag << "#------------------------------------------" << std::endl;
+  //   fmag << "#---------------[Parameters]---------------" << std::endl;
+  //   fmag << "# ratio : " << ratio << std::endl;
+  //   fmag << "# tau : " << tau << std::endl;
+  //   fmag << "# fermi energy : "<< Ef << " (eV)" << std::endl;
+  //   fmag << "# kf : "<< kef << " (1/nm)" << std::endl;
+  //   fmag << "# grid size :  [" << Nx << "," << Ny << "," << Nz <<"] points"<< std::endl;
+  //   fmag << "# energy integration points : "<< EnergyPoints << std::endl;
+  //   fmag << "# x :  [" << xi << "," << xf << "] (in units of nm)"<< std::endl;
+  //   fmag << "# y :  [" << yi << "," << yf << "] (in units of nm) "<< std::endl;
+  //   fmag << "# z :  [" << zi << "," << zf << "] (in units of nm) "<< std::endl;
+  //   fmag << "#------------------------------------------" << std::endl;
 
-    fspin << "#---------------[Parameters]---------------" << std::endl;
-    fspin << "# ratio : " << ratio << std::endl;
-    fspin << "# tau : " << tau << std::endl;
-    fspin << "# fermi energy : "<< Ef << " (eV)" << std::endl;
-    fspin << "# kf : "<< kef << " (1/nm)" << std::endl;
-    fspin << "# grid size :  [" << Nx << "," << Ny << "," << Nz <<"] points"<< std::endl;
-    fspin << "# energy integration points : "<< EnergyPoints << std::endl;
-    fspin << "# x :  [" << xi << "," << xf << "] (in units of nm)"<< std::endl;
-    fspin << "# y :  [" << yi << "," << yf << "] (in units of nm) "<< std::endl;
-    fspin << "# z :  [" << zi << "," << zf << "] (in units of nm) "<< std::endl;
-    fspin << "#------------------------------------------" << std::endl;
+  //   fspin << "#---------------[Parameters]---------------" << std::endl;
+  //   fspin << "# ratio : " << ratio << std::endl;
+  //   fspin << "# tau : " << tau << std::endl;
+  //   fspin << "# fermi energy : "<< Ef << " (eV)" << std::endl;
+  //   fspin << "# kf : "<< kef << " (1/nm)" << std::endl;
+  //   fspin << "# grid size :  [" << Nx << "," << Ny << "," << Nz <<"] points"<< std::endl;
+  //   fspin << "# energy integration points : "<< EnergyPoints << std::endl;
+  //   fspin << "# x :  [" << xi << "," << xf << "] (in units of nm)"<< std::endl;
+  //   fspin << "# y :  [" << yi << "," << yf << "] (in units of nm) "<< std::endl;
+  //   fspin << "# z :  [" << zi << "," << zf << "] (in units of nm) "<< std::endl;
+  //   fspin << "#------------------------------------------" << std::endl;
 
-    double L = abs(z_coords[1] - z_coords[0]);
+  //   double L = abs(z_coords[1] - z_coords[0]);
 
-    std::cout << "Quantum-well height (z) : "<< L <<  " nm" << std::endl;
-    double jx[Nx][Ny];
-    double jy[Nx][Ny];
+  //   std::cout << "Quantum-well height (z) : "<< L <<  " nm" << std::endl;
+  //   double jx[Nx][Ny];
+  //   double jy[Nx][Ny];
     
 
-    double sx[Nx][Ny];
-    double sy[Nx][Ny];
-    double sz[Nx][Ny];
+  //   double sx[Nx][Ny];
+  //   double sy[Nx][Ny];
+  //   double sz[Nx][Ny];
 
 
-    for( int i = 0; i < Nx; i++){
-      for ( int j = 0; j < Ny; j++){
+  //   for( int i = 0; i < Nx; i++){
+  //     for ( int j = 0; j < Ny; j++){
 
-        double r = sqrt(pow(xs[i],2)+pow(ys[j],2));
-        double theta_r = atan2(ys[j],xs[i]);
+  //       double r = sqrt(pow(xs[i],2)+pow(ys[j],2));
+  //       double theta_r = atan2(ys[j],xs[i]);
 
-        // Partial variables
-        double J_r = 0.0;
-        double J_theta = 0.0;
+  //       // Partial variables
+  //       double J_r = 0.0;
+  //       double J_theta = 0.0;
 
-        double psx = 0.0;
-        double psy = 0.0;
-        double psz = 0.0;
+  //       double psx = 0.0;
+  //       double psy = 0.0;
+  //       double psz = 0.0;
 
     
-        for (int e = 0; e < EnergyPoints; e++){
-          params_t params = {r,theta_r,kes[e],tau};
+  //       for (int e = 0; e < EnergyPoints; e++){
+  //         params_t params = {r,theta_r,kes[e],tau};
 
-          // Energy dependent T-matrix in \hbar^{2}/m^{*}
-          t_up = t_ups[e];
-          t_dn = t_dns[e];
+  //         // Energy dependent T-matrix in \hbar^{2}/m^{*}
+  //         t_up = t_ups[e];
+  //         t_dn = t_dns[e];
 
-          results_t greens_functions = computeGreensFunction(params);
-          std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
-          std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);
-          std::complex<double> G_dn_up (greens_functions.dn_up_real , greens_functions.dn_up_imag);
-          std::complex<double> Grad_r_diag (greens_functions.grad_r_diag_real , greens_functions.grad_r_diag_imag);
-          std::complex<double> Grad_r_up_dn (greens_functions.grad_r_up_dn_real , greens_functions.grad_r_up_dn_imag);
-          std::complex<double> Grad_r_dn_up (greens_functions.grad_r_dn_up_real , greens_functions.grad_r_dn_up_imag);
-          std::complex<double> Grad_theta_diag (greens_functions.grad_theta_diag_real , greens_functions.grad_theta_diag_imag);
-          std::complex<double> Grad_theta_up_dn (greens_functions.grad_theta_up_dn_real , greens_functions.grad_theta_up_dn_imag);
-          std::complex<double> Grad_theta_dn_up (greens_functions.grad_theta_dn_up_real , greens_functions.grad_theta_dn_up_imag);
-
-
-          std::complex<double> A_r_up_dn = cos(theta_r)*std::exp(ii*tau) + ii*sin(theta_r)*std::exp(-ii*tau);
-          std::complex<double> A_r_dn_up = cos(theta_r)*std::exp(-ii*tau) - ii*sin(theta_r)*std::exp(ii*tau);
-
-          std::complex<double> A_t_up_dn = ii*cos(theta_r)*std::exp(-ii*tau)- sin(theta_r)*std::exp(ii*tau);
-          std::complex<double> A_t_dn_up = -ii*cos(theta_r)*std::exp(ii*tau)- sin(theta_r)*std::exp(-ii*tau);
-
-          double J_r_grad = 1.937025*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_r_dn_up*G_up_dn - Grad_r_up_dn*G_dn_up) );
-          double J_theta_grad = 1.937025*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_theta_dn_up*G_up_dn - Grad_theta_up_dn*G_dn_up) ); 
-
-          double J_r_so = 3.87405*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_r_up_dn*G_dn_up - A_r_dn_up*G_up_dn) );
-          double J_theta_so = 3.87405*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
+  //         results_t greens_functions = computeGreensFunction(params);
+  //         std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
+  //         std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);
+  //         std::complex<double> G_dn_up (greens_functions.dn_up_real , greens_functions.dn_up_imag);
+  //         std::complex<double> Grad_r_diag (greens_functions.grad_r_diag_real , greens_functions.grad_r_diag_imag);
+  //         std::complex<double> Grad_r_up_dn (greens_functions.grad_r_up_dn_real , greens_functions.grad_r_up_dn_imag);
+  //         std::complex<double> Grad_r_dn_up (greens_functions.grad_r_dn_up_real , greens_functions.grad_r_dn_up_imag);
+  //         std::complex<double> Grad_theta_diag (greens_functions.grad_theta_diag_real , greens_functions.grad_theta_diag_imag);
+  //         std::complex<double> Grad_theta_up_dn (greens_functions.grad_theta_up_dn_real , greens_functions.grad_theta_up_dn_imag);
+  //         std::complex<double> Grad_theta_dn_up (greens_functions.grad_theta_dn_up_real , greens_functions.grad_theta_dn_up_imag);
 
 
-          J_r +=  (J_r_grad + J_r_so)*dE;
-          J_theta +=  (J_theta_grad + J_theta_so)*dE;
+  //         std::complex<double> A_r_up_dn = cos(theta_r)*std::exp(ii*tau) + ii*sin(theta_r)*std::exp(-ii*tau);
+  //         std::complex<double> A_r_dn_up = cos(theta_r)*std::exp(-ii*tau) - ii*sin(theta_r)*std::exp(ii*tau);
 
-          psx += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
-          psy += (-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
-          psz += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
-        }
-        jx[i][j] = J_r*cos(theta_r) - J_theta*sin(theta_r);
-        jy[i][j] = J_r*sin(theta_r) + J_theta*cos(theta_r);
-        sx[i][j] = psx;
-        sy[i][j] = psy;
-        sz[i][j] = psz;
-        // double J_x = (J_r*cos(theta_r) - J_theta*sin(theta_r))*(2.0/L)*pow(cos(M_PI*z/L),2);
-        // double J_y = (J_r*sin(theta_r) + J_theta*cos(theta_r))*(2.0/L)*pow(cos(M_PI*z/L),2);
+  //         std::complex<double> A_t_up_dn = ii*cos(theta_r)*std::exp(-ii*tau)- sin(theta_r)*std::exp(ii*tau);
+  //         std::complex<double> A_t_dn_up = -ii*cos(theta_r)*std::exp(ii*tau)- sin(theta_r)*std::exp(-ii*tau);
 
-        // sx = sx*(2.0/L)*pow(cos(M_PI*z/L),2);
-        // sy = sy*(2.0/L)*pow(cos(M_PI*z/L),2);
-        // sz = sz*(2.0/L)*pow(cos(M_PI*z/L),2);
+  //         double J_r_grad = 1.937025*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_r_dn_up*G_up_dn - Grad_r_up_dn*G_dn_up) );
+  //         double J_theta_grad = 1.937025*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_theta_dn_up*G_up_dn - Grad_theta_up_dn*G_dn_up) ); 
+
+  //         double J_r_so = 3.87405*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_r_up_dn*G_dn_up - A_r_dn_up*G_up_dn) );
+  //         double J_theta_so = 3.87405*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
+
+
+  //         J_r +=  (J_r_grad + J_r_so)*dE;
+  //         J_theta +=  (J_theta_grad + J_theta_so)*dE;
+
+  //         psx += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
+  //         psy += (-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+  //         psz += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+  //       }
+  //       jx[i][j] = J_r*cos(theta_r) - J_theta*sin(theta_r);
+  //       jy[i][j] = J_r*sin(theta_r) + J_theta*cos(theta_r);
+  //       sx[i][j] = psx;
+  //       sy[i][j] = psy;
+  //       sz[i][j] = psz;
+  //       // double J_x = (J_r*cos(theta_r) - J_theta*sin(theta_r))*(2.0/L)*pow(cos(M_PI*z/L),2);
+  //       // double J_y = (J_r*sin(theta_r) + J_theta*cos(theta_r))*(2.0/L)*pow(cos(M_PI*z/L),2);
+
+  //       // sx = sx*(2.0/L)*pow(cos(M_PI*z/L),2);
+  //       // sy = sy*(2.0/L)*pow(cos(M_PI*z/L),2);
+  //       // sz = sz*(2.0/L)*pow(cos(M_PI*z/L),2);
         
-      } 
-    }
-    for( int i = 0; i < Nx; i++){
-      for ( int j = 0; j < Ny; j++){
-        for ( int k = 0; k < Nz; k++){
-          double mx = -(1.0/L)*zs[k]*jy[i][j]*pow(cos(M_PI*zs[k]/L),2)/2.206271475;
-          double my = (1.0/L)*zs[k]*jx[i][j]*pow(cos(M_PI*zs[k]/L),2)/2.206271475;
-          double mz = (1.0/L)*(xs[i]*jy[i][j] - ys[j]*jx[i][j])*pow(cos(M_PI*zs[k]/L),2)/2.206271475;
+  //     } 
+  //   }
+  //   for( int i = 0; i < Nx; i++){
+  //     for ( int j = 0; j < Ny; j++){
+  //       for ( int k = 0; k < Nz; k++){
+  //         double mx = -(1.0/L)*zs[k]*jy[i][j]*pow(cos(M_PI*zs[k]/L),2)/2.206271475;
+  //         double my = (1.0/L)*zs[k]*jx[i][j]*pow(cos(M_PI*zs[k]/L),2)/2.206271475;
+  //         double mz = (1.0/L)*(xs[i]*jy[i][j] - ys[j]*jx[i][j])*pow(cos(M_PI*zs[k]/L),2)/2.206271475;
 
-          sx[i][j] *=(1.0/L)*pow(cos(M_PI*zs[k]/L),2);
-          sy[i][j] *=(1.0/L)*pow(cos(M_PI*zs[k]/L),2);
-          sz[i][j] *= (1.0/L)*pow(cos(M_PI*zs[k]/L),2);
-          fmag << xs[i] << "," << ys[j]  << "," << zs[k] << "," << mx << "," << my << "," << mz << std::endl; // In units of \mu_{B}.nm^{-3}          
-          fspin << xs[i] << "," << ys[j] << "," << zs[k] << "," << sx[i][j] << "," << sy[i][j] << "," << sz[i][j] << std::endl;
-        }
-      }
-    }
+  //         sx[i][j] *=(1.0/L)*pow(cos(M_PI*zs[k]/L),2);
+  //         sy[i][j] *=(1.0/L)*pow(cos(M_PI*zs[k]/L),2);
+  //         sz[i][j] *= (1.0/L)*pow(cos(M_PI*zs[k]/L),2);
+  //         fmag << xs[i] << "," << ys[j]  << "," << zs[k] << "," << mx << "," << my << "," << mz << std::endl; // In units of \mu_{B}.nm^{-3}          
+  //         fspin << xs[i] << "," << ys[j] << "," << zs[k] << "," << sx[i][j] << "," << sy[i][j] << "," << sz[i][j] << std::endl;
+  //       }
+  //     }
+  //   }
 
-    std::cout << "Orbital magnetization written in " << filename << std::endl;
-    std::cout << "Spin magnetization written in " << filename_spin << std::endl;
-    fmag.close();
-    fspin.close();
-  }
+  //   std::cout << "Orbital magnetization written in " << filename << std::endl;
+  //   std::cout << "Spin magnetization written in " << filename_spin << std::endl;
+  //   fmag.close();
+  //   fspin.close();
+  // }
 
-  // Total orbital magnetization
-  if (calc_total){
-    std::cout << "Calculating total orbital magnetization..." << std::endl;
-    std::string integrated_magmom_filename = "integrated_magmom_r_" + std::to_string(ratio) + ".dat";
-    std::ofstream fint;
-    fint.open(integrated_magmom_filename);
+  // // Total orbital magnetization
+  // if (calc_total){
+  //   std::cout << "Calculating total orbital magnetization..." << std::endl;
+  //   std::string integrated_magmom_filename = "integrated_magmom_r_" + std::to_string(ratio) + ".dat";
+  //   std::ofstream fint;
+  //   fint.open(integrated_magmom_filename);
 
-    double magmon = 0.0;   
-    for( double x: xs){
-      for (double y: ys){
-        double r = sqrt(pow(x,2)+pow(y,2));
-        double theta_r = atan2(y,x);
+  //   double magmon = 0.0;   
+  //   for( double x: xs){
+  //     for (double y: ys){
+  //       double r = sqrt(pow(x,2)+pow(y,2));
+  //       double theta_r = atan2(y,x);
 
-        double J_r = 0.0;
-        double J_theta = 0.0;
-        for (double ke: kes){
-           double E = 0.076348*ke*ke/(2.0*eff_mass);
+  //       double J_r = 0.0;
+  //       double J_theta = 0.0;
+  //       for (double ke: kes){
+  //          double E = 0.076348*ke*ke/(2.0*eff_mass);
 
-          // Energy dependent T-matrix in \hbar^{2}/m^{*}
-          t_up = -(ii + std::exp(std::complex<double>(0, 2)*atan((E-Eu)/G)));
-          t_dn = -(ii + std::exp(std::complex<double>(0, 2)*atan((E-Ed)/G)));
+  //         // Energy dependent T-matrix in \hbar^{2}/m^{*}
+  //         t_up = -(ii + std::exp(std::complex<double>(0, 2)*atan((E-Eu)/G)));
+  //         t_dn = -(ii + std::exp(std::complex<double>(0, 2)*atan((E-Ed)/G)));
 
-          params_t params = {r,theta_r,ke,tau};
+  //         params_t params = {r,theta_r,ke,tau};
 
-          results_t greens_functions = computeGreensFunction(params);
-          std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
-          std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);
-          std::complex<double> G_dn_up (greens_functions.dn_up_real , greens_functions.dn_up_imag);
-          std::complex<double> Grad_r_diag (greens_functions.grad_r_diag_real , greens_functions.grad_r_diag_imag);
-          std::complex<double> Grad_r_up_dn (greens_functions.grad_r_up_dn_real , greens_functions.grad_r_up_dn_imag);
-          std::complex<double> Grad_r_dn_up (greens_functions.grad_r_dn_up_real , greens_functions.grad_r_dn_up_imag);
-          std::complex<double> Grad_theta_diag (greens_functions.grad_theta_diag_real , greens_functions.grad_theta_diag_imag);
-          std::complex<double> Grad_theta_up_dn (greens_functions.grad_theta_up_dn_real , greens_functions.grad_theta_up_dn_imag);
-          std::complex<double> Grad_theta_dn_up (greens_functions.grad_theta_dn_up_real , greens_functions.grad_theta_dn_up_imag);
-
-
-          std::complex<double> A_r_up_dn = cos(theta_r)*std::exp(ii*tau) + ii*sin(theta_r)*std::exp(-ii*tau);
-          std::complex<double> A_r_dn_up = cos(theta_r)*std::exp(-ii*tau) - ii*sin(theta_r)*std::exp(ii*tau);
-
-          std::complex<double> A_t_up_dn = ii*cos(theta_r)*std::exp(-ii*tau)- sin(theta_r)*std::exp(ii*tau);
-          std::complex<double> A_t_dn_up = -ii*cos(theta_r)*std::exp(ii*tau)- sin(theta_r)*std::exp(-ii*tau);
-
-          double J_r_grad = (-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_r_dn_up*G_up_dn - Grad_r_up_dn*G_dn_up) );
-          double J_theta_grad = (-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_theta_dn_up*G_up_dn - Grad_theta_up_dn*G_dn_up) ); 
-
-          double J_r_so = (-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_r_up_dn*G_dn_up - A_r_dn_up*G_up_dn) );
-          double J_theta_so = (-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
+  //         results_t greens_functions = computeGreensFunction(params);
+  //         std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
+  //         std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);
+  //         std::complex<double> G_dn_up (greens_functions.dn_up_real , greens_functions.dn_up_imag);
+  //         std::complex<double> Grad_r_diag (greens_functions.grad_r_diag_real , greens_functions.grad_r_diag_imag);
+  //         std::complex<double> Grad_r_up_dn (greens_functions.grad_r_up_dn_real , greens_functions.grad_r_up_dn_imag);
+  //         std::complex<double> Grad_r_dn_up (greens_functions.grad_r_dn_up_real , greens_functions.grad_r_dn_up_imag);
+  //         std::complex<double> Grad_theta_diag (greens_functions.grad_theta_diag_real , greens_functions.grad_theta_diag_imag);
+  //         std::complex<double> Grad_theta_up_dn (greens_functions.grad_theta_up_dn_real , greens_functions.grad_theta_up_dn_imag);
+  //         std::complex<double> Grad_theta_dn_up (greens_functions.grad_theta_dn_up_real , greens_functions.grad_theta_dn_up_imag);
 
 
-          J_r += J_r_grad + J_r_so;
-          J_theta += J_theta_grad + J_theta_so;
+  //         std::complex<double> A_r_up_dn = cos(theta_r)*std::exp(ii*tau) + ii*sin(theta_r)*std::exp(-ii*tau);
+  //         std::complex<double> A_r_dn_up = cos(theta_r)*std::exp(-ii*tau) - ii*sin(theta_r)*std::exp(ii*tau);
 
-        }
+  //         std::complex<double> A_t_up_dn = ii*cos(theta_r)*std::exp(-ii*tau)- sin(theta_r)*std::exp(ii*tau);
+  //         std::complex<double> A_t_dn_up = -ii*cos(theta_r)*std::exp(ii*tau)- sin(theta_r)*std::exp(-ii*tau);
 
-        double J_x = J_r*cos(theta_r) - J_theta*sin(theta_r);
-        double J_y = J_r*sin(theta_r) + J_theta*cos(theta_r);
-        magmon += x*J_y - y*J_x;
-      }
-    }
-    fint << tau << "," << magmon << std::endl;
-    std::cout << "Calculations written in " << integrated_magmom_filename << std::endl;
-  }
+  //         double J_r_grad = (-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_r_dn_up*G_up_dn - Grad_r_up_dn*G_dn_up) );
+  //         double J_theta_grad = (-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_theta_dn_up*G_up_dn - Grad_theta_up_dn*G_dn_up) ); 
 
-  // LDOS
-  if (calc_ldos){
-    std::cout << "Calculating LDOS ..." << std::endl;
-    std::string filename = "ldos_r_"+std::to_string(ratio)+".dat";
+  //         double J_r_so = (-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_r_up_dn*G_dn_up - A_r_dn_up*G_up_dn) );
+  //         double J_theta_so = (-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
+
+
+  //         J_r += J_r_grad + J_r_so;
+  //         J_theta += J_theta_grad + J_theta_so;
+
+  //       }
+
+  //       double J_x = J_r*cos(theta_r) - J_theta*sin(theta_r);
+  //       double J_y = J_r*sin(theta_r) + J_theta*cos(theta_r);
+  //       magmon += x*J_y - y*J_x;
+  //     }
+  //   }
+  //   fint << tau << "," << magmon << std::endl;
+  //   std::cout << "Calculations written in " << integrated_magmom_filename << std::endl;
+  // }
+
+  // // LDOS
+  // if (calc_ldos){
+  //   std::cout << "Calculating LDOS ..." << std::endl;
+  //   std::string filename = "ldos_r_"+std::to_string(ratio)+".dat";
     
-    std::ofstream fldos;
+  //   std::ofstream fldos;
     
-    fldos.open(filename);
+  //   fldos.open(filename);
 
-    for( double x: xs){
-      for (double y: ys){
+  //   for( double x: xs){
+  //     for (double y: ys){
 
-        double r = sqrt(pow(x,2)+pow(y,2));
-        double theta_r = atan2(y,x);
+  //       double r = sqrt(pow(x,2)+pow(y,2));
+  //       double theta_r = atan2(y,x);
 
-        double ldos = 0.0;
+  //       double ldos = 0.0;
 
-        for (int i = 0; i < EnergyPoints; i++){
-          params_t params = {r,theta_r,kes[i],tau};
+  //       for (int i = 0; i < EnergyPoints; i++){
+  //         params_t params = {r,theta_r,kes[i],tau};
 
 
-          // Energy dependent T-matrix in \hbar^{2}/m^{*}
-          t_up = t_ups[i];
-          t_dn = t_dns[i];
+  //         // Energy dependent T-matrix in \hbar^{2}/m^{*}
+  //         t_up = t_ups[i];
+  //         t_dn = t_dns[i];
 
-          results_t greens_functions = computeGreensFunctionLDOS(params);
-          std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
-          std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);
-          std::complex<double> G_dn_up (greens_functions.dn_up_real , greens_functions.dn_up_imag);
+  //         results_t greens_functions = computeGreensFunctionLDOS(params);
+  //         std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
+  //         std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);
+  //         std::complex<double> G_dn_up (greens_functions.dn_up_real , greens_functions.dn_up_imag);
           
-          ldos +=  (-1.0/PI)*std::imag((t_up-t_dn)*(pow(G_diag,2) - G_dn_up*G_up_dn));
+  //         ldos +=  (-1.0/PI)*std::imag((t_up-t_dn)*(pow(G_diag,2) - G_dn_up*G_up_dn));
 
-        }
+  //       }
        
        
         
-      fldos << x << "," << y << "," << ldos << std::endl; // In units of \mu_{B}.nm^{-2}
+  //     fldos << x << "," << y << "," << ldos << std::endl; // In units of \mu_{B}.nm^{-2}
         
-      } 
-    }
-    std::cout << "LDOS written in " << filename << std::endl;
-    fldos.close();
-  }
+  //     } 
+  //   }
+  //   std::cout << "LDOS written in " << filename << std::endl;
+  //   fldos.close();
+  // }
 
   auto end = std::chrono::steady_clock::now(); 
 
