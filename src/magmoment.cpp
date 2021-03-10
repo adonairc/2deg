@@ -46,7 +46,7 @@ std::vector<double> linspace(T start_in, T end_in, int num_in)
 typedef struct {
   double r;
   double theta_r;
-  double ke;
+  double e;
   double tau;
 } params_t;
 
@@ -88,17 +88,17 @@ double grad_r_diag_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f) ;
+  double Q = sqrt(e+pow(k0,2)*f) ;
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(qplus*rho);
-  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(qminus*rho);
+  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
+  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
 
 
   double T1 = (qplus*qplus*R2plus + qminus*qminus*R2minus)*cos(theta_q-theta_r);
@@ -111,12 +111,12 @@ double grad_r_diag_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
@@ -131,17 +131,17 @@ double grad_r_dn_up_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(qplus*rho)-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
-  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(qminus*rho)-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
+  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
+  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
 
 
   double T1 = (PI/2.0)*cos(theta_q-tau)*(-qplus*qplus*cos(qplus*rho) + qminus*qminus*cos(qminus*rho));
@@ -154,17 +154,17 @@ double grad_r_dn_up_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(qplus*rho)-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
-  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(qminus*rho)-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
+  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
+  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
 
 
   double T1 = cos(theta_q-tau)*(qplus*qplus*R1plus - qminus*qminus*R1minus);
@@ -178,17 +178,17 @@ double grad_r_up_dn_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(qplus*rho)-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
-  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(qminus*rho)-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
+  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
+  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
 
 
   double T1 = (PI/2.0)*cos(theta_q-tau)*(-qplus*qplus*cos(qplus*rho) + qminus*qminus*cos(qminus*rho));
@@ -201,17 +201,17 @@ double grad_r_up_dn_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(qplus*rho)-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
-  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(qminus*rho)-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
+  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
+  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
 
 
   double T1 = cos(theta_q-tau)*(qplus*qplus*R1plus - qminus*qminus*R1minus);
@@ -229,17 +229,17 @@ double grad_theta_diag_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(qplus*rho);
-  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(qminus*rho);
+  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
+  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
 
 
   double T1 = (qplus*qplus*R2plus + qminus*qminus*R2minus)*sin(theta_q-theta_r);
@@ -252,12 +252,12 @@ double grad_theta_diag_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
@@ -270,17 +270,17 @@ double grad_theta_dn_up_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(qplus*rho)-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
-  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(qminus*rho)-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
+  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
+  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
 
 
   double T1 = (PI/2.0)*cos(theta_q-tau)*(-qplus*qplus*cos(qplus*rho) + qminus*qminus*cos(qminus*rho));
@@ -293,17 +293,17 @@ double grad_theta_dn_up_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(qplus*rho)-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
-  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(qminus*rho)-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
+  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
+  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
 
 
   double T1 = cos(theta_q-tau)*(qplus*qplus*R1plus - qminus*qminus*R1minus);
@@ -317,17 +317,17 @@ double grad_theta_up_dn_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(qplus*rho)-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
-  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(qminus*rho)-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
+  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
+  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
 
 
   double T1 = (PI/2.0)*cos(theta_q-tau)*(-qplus*qplus*cos(qplus*rho) + qminus*qminus*cos(qminus*rho));
@@ -340,17 +340,17 @@ double grad_theta_up_dn_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(qplus*rho)-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
-  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(qminus*rho)-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
+  double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
+  double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
 
 
   double T1 = cos(theta_q-tau)*(qplus*qplus*R1plus - qminus*qminus*R1minus);
@@ -365,17 +365,17 @@ double radial_dn_up_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(qplus*rho);
-  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(qminus*rho);
+  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
+  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
 
   double S = qplus*(sin(theta_q+tau)*R2plus - (PI/2.0)*cos(theta_q-tau)*sin(qplus*rho)) - qminus*(sin(theta_q+tau)*R2minus - (PI/2.0)*cos(theta_q-tau)*sin(qminus*rho));
   return((1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
@@ -385,18 +385,18 @@ double radial_dn_up_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
 
-  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(qplus*rho);
-  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(qminus*rho);
+  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
+  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
 
   double S = qplus*(cos(theta_q-tau)*R2plus + (PI/2.0)*sin(theta_q+tau)*sin(qplus*rho)) - qminus*(cos(theta_q-tau)*R2minus+(PI/2.0)*sin(theta_q+tau)*sin(qminus*rho));
   return((1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
@@ -407,17 +407,17 @@ double radial_up_dn_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(qplus*rho);
-  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(qminus*rho);
+  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
+  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
 
   double S = -qplus*(sin(theta_q+tau)*R2plus + (PI/2.0)*cos(theta_q-tau)*sin(qplus*rho)) + qminus*(sin(theta_q+tau)*R2minus + (PI/2.0)*cos(theta_q-tau)*sin(qminus*rho));
   return((1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
@@ -427,17 +427,17 @@ double radial_up_dn_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(qplus*rho);
-  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(qminus*rho);
+  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
+  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
 
   double S = qplus*(cos(theta_q-tau)*R2plus - (PI/2.0)*sin(theta_q+tau)*sin(qplus*rho)) - qminus*(cos(theta_q-tau)*R2minus - (PI/2.0)*sin(theta_q+tau)*sin(qminus*rho));
   return((1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
@@ -448,17 +448,18 @@ double radial_diagonal_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
-  double Iplus = -cos(qplus*rho)*gsl_sf_Ci(qplus*rho)-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
-  double Iminus = -cos(qminus*rho)*gsl_sf_Ci(qminus*rho)-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
+
+  double Iplus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
+  double Iminus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
   // std::cout << "radial_diagonal_real() Q = " << Q << std::endl;
 
   return(-(1.0/(2*M_PI*M_PI))*(qplus*Iplus+qminus*Iminus)/Q);
@@ -469,15 +470,15 @@ double radial_diagonal_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
-  double rho = abs(r*cos(theta_q-theta_r));
+  double rho = r*cos(theta_q-theta_r);
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt(abs(e+pow(k0,2)*f));
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
-  // std::cout << "radial_diagonal_imag() Q = " << Q << std::endl;
+
 
   return(-(1.0/(2*M_PI*M_PI))*(PI/2)*(qplus*cos(qplus*rho) + qminus*cos(qminus*rho))/Q);
 
@@ -839,16 +840,15 @@ results_t computeGreensFunctionLDOS(params_t params){
 //
 // k = 8.617333262145×10−5 eV.K^{-1}
 
-double fermi(double ke, double kf, double eff_mass, double beta){
-  // ke*ke/(2.0*eff_mass*13.097767) = E;
-  // kf*kf/(2.0*eff_mass*13.097767) = E;
-  return 1.0/(exp(beta*((ke*ke/(2.0*eff_mass*13.097767))-(kf*kf/(2.0*eff_mass*13.097767))))+1.0);
-}
+// double fermi(double ke, double kf, double eff_mass, double beta){
+//   // ke*ke/(2.0*eff_mass*13.097767) = E;
+//   // kf*kf/(2.0*eff_mass*13.097767) = E;
+//   return 1.0/(exp(beta*((ke*ke/(2.0*eff_mass*13.097767))-(kf*kf/(2.0*eff_mass*13.097767))))+1.0);
+// }
 int main (int argc, char* argv[])
 {
   int Nx,Ny,Nz, Nt,EnergyPoints;
-  double beta = 38.0;
-  double ratio,tau,initial_coord,final_coord,kef,kfinal;
+  double tau,ratio,alpha,beta,initial_coord,final_coord,kf,ef;
   double eff_mass,Ed,Eu,G,Ef;
   bool calc_line, calc_density,calc_total,calc_current,calc_current_int,calc_volume,calc_ldos;
   std::complex<double> t_up,t_dn;
@@ -876,19 +876,21 @@ int main (int argc, char* argv[])
       ("help","Print program options")
       ("x-coords,x",po::value<std::vector<double>>(&x_coords)->multitoken()->required(),"X coordinates in nm (e.g -x -10 10)")
       ("y-coords,y",po::value<std::vector<double>>(&y_coords)->multitoken()->required(),"Y coordinates in nm (e.g -y -10 10)")
-      ("z-coords,z",po::value<std::vector<double>>(&z_coords)->multitoken(),"Z coordinates in nm (e.g -z -10 10)")
+      // ("z-coords,z",po::value<std::vector<double>>(&z_coords)->multitoken(),"Z coordinates in nm (e.g -z -10 10)")
       ("Nx", po::value<int>(&Nx)->required(), "Number of grid points along x-axis")
       ("Ny", po::value<int>(&Ny)->required(), "Number of grid points along y-axis")
-      ("Nz", po::value<int>(&Nz), "Number of grid points along z-axis")
+      // ("Nz", po::value<int>(&Nz), "Number of grid points along z-axis")
       ("Nt", po::value<int>(&Nt), "Number of angular points (theta)")
       ("Ne", po::value<int>(&EnergyPoints)->required(), "Energy points")
       ("Ef", po::value<double>(&Ef), "Fermi energy (eV)")
-      ("effective-mass,m", po::value<double>(&eff_mass), "Electron effective mass")
+      ("effective-mass,m", po::value<double>(&eff_mass)->required(), "Electron effective mass")
       ("ratio,r", po::value<double>(&ratio), "Spin-orbit strength ratio (alpha/beta)")
-      ("tau,t", po::value<double>(&tau), "Spin-orbit strength phase (tau)")
-      ("k0", po::value<double>(&k0)->required(), "Spin-orbit wave-vector (1/nm)")
-      ("kef", po::value<double>(&kef), "Fermi wave-vector (1/nm)")
-      ("kfinal", po::value<double>(&kfinal), "Final wave-vector (1/nm)")
+      ("tau,t", po::value<double>(&tau), "Rashba spin-orbit strength (alpha)")
+      ("k0", po::value<double>(&k0), "Dresselhaus spin-orbit strength (beta)")
+      ("alpha,a", po::value<double>(&alpha), "Rashba spin-orbit strength (alpha)")
+      ("beta,b", po::value<double>(&beta), "Dresselhaus spin-orbit strength (beta)")
+      ("kf", po::value<double>(&kf), "Fermi wave-vector (1/nm)")
+      ("ef", po::value<double>(&ef), "Fermi energy (eV)")
       ("broadening,g", po::value<double>(&G), "Broadening energy (eV)")
       ("e_up", po::value<double>(&Eu), "Impurity resonance energy for spin up (eV)")
       ("e_dn", po::value<double>(&Ed), "Impurity resonance energy for spin down (eV)")
@@ -935,13 +937,34 @@ int main (int argc, char* argv[])
   double yf = y_coords[1];
   std::vector<double> ys = linspace(yi,yf,Ny);
 
-  double zi = z_coords[0];
-  double zf = z_coords[1];
-  std::vector<double> zs = linspace(zi,zf,Nz);
+  // double zi = z_coords[0];
+  // double zf = z_coords[1];
+  // std::vector<double> zs = linspace(zi,zf,Nz);
 
   // double ri = 0.01*(2*M_PI);
   // double rf = 20*(2*M_PI);
   std::vector<double> rs = linspace(xi,xf,Nx);
+
+
+  if (vm.count("alpha") && vm.count("beta")){
+    k0 = 13.097767*eff_mass*sqrt(alpha*alpha + beta*beta);
+    tau = atan2(alpha,beta);
+    ratio = alpha/beta;
+  }
+  else if (vm.count("tau") && vm.count("k0")){
+    ratio = tan(tau);
+    alpha = k0*sin(tau)/(13.097767*eff_mass);
+    beta = k0*cos(tau)/(13.097767*eff_mass);
+  }
+  else {
+    std::cout << "Please enter SO parameters" << std::endl;
+    exit(1);
+  }
+
+  if (!vm.count("kf")){
+      kf = sqrt(2.0*13.097767*eff_mass*ef);
+  }
+  
 
  
   // std::cout << "xs size: " << xs.size() << std::endl;
@@ -965,8 +988,12 @@ int main (int argc, char* argv[])
   
   // Down - delta = 0 -> t_dn = 0
   // Up  - delta pi/2 -> t_up = -2i
-  t_up = std::complex<double>(0.0,-2.0);
-  t_dn = std::complex<double>(0.0,0.0);
+  t_up = std::complex<double>(1.0,0.0);
+  t_dn = std::complex<double>(-1.0,0.0);
+
+
+  // t_up = std::complex<double>(1.0,0.0);
+  // t_dn = std::complex<double>(-1.0,0.0);
 
   // //double tau = 1.31*k0;
   // double t_up = 0.0;
@@ -982,26 +1009,26 @@ int main (int argc, char* argv[])
   // for(int t = 0; t < 4; t++){
   //   double tau = taus[t];
   std::cout << "\n---------------[ 2DEG ]---------------" << std::endl;
-  std::cout << "ratio : " << ratio << std::endl;
-  std::cout << "tau : " << tau << std::endl;
-  std::cout << "fermi energy : "<< Ef << " (eV)" << std::endl;
-  std::cout << "kef : "<< kef << std::endl;
-  std::cout << "grid size :  [" << Nx << "," << Ny << "," << Nz <<"] points"<< std::endl;
+  std::cout << "alpha : " << alpha << std::endl;
+  std::cout << "beta : " << beta << std::endl;
+  std::cout << "tau: " << tau << std::endl;
+  std::cout << "k0 : " << k0 << std::endl;
+  std::cout << "kf : "<< kf << std::endl;
+  std::cout << "grid size :  [" << Nx << "," << Ny << "] points"<< std::endl;
   std::cout << "energy integration points : "<< EnergyPoints << std::endl;
   // std::cout << "[";
   // for (auto ke: kes){
   //   std::cout << ke*ke/(2.0*13.097767*eff_mass) << " ";
   // }
-  std::cout << "]" << std::endl;
+  // std::cout << "]" << std::endl;
   // std::cout << "dE = " << dE << " eV" << std::endl;
   std::cout << "x :  [" << xi << "," << xf << "] (nm)"<< std::endl;
   std::cout << "y :  [" << yi << "," << yf << "] (nm) "<< std::endl;
-  std::cout << "z :  [" << zi << "," << zf << "] (nm) "<< std::endl;
-  std::cout << "\n---------------[ Impurity ]---------------" << std::endl;
-  std::cout << "e_up : "<< Eu << " (eV)" << std::endl;
-  std::cout << "e_down : "<< Ed << " (eV)" << std::endl;
-  std::cout << "broadening : "<< G << " (eV)" << std::endl;
-  std::cout << "------------------------------------------" << std::endl;
+  // std::cout << "\n---------------[ Impurity ]---------------" << std::endl;
+  // std::cout << "e_up : "<< Eu << " (eV)" << std::endl;
+  // std::cout << "e_down : "<< Ed << " (eV)" << std::endl;
+  // std::cout << "broadening : "<< G << " (eV)" << std::endl;
+  // std::cout << "------------------------------------------" << std::endl;
 
   auto start = std::chrono::steady_clock::now();
 
@@ -1014,7 +1041,7 @@ int main (int argc, char* argv[])
     fcur.open(filename);
 
     double kinitial = 0.001;
-    std::vector<double> kes = linspace(kinitial,kfinal,EnergyPoints);
+    std::vector<double> kes = linspace(kinitial,kf,EnergyPoints);
     double dE = (kes[1]*kes[1]-kes[0]*kes[0])/(2.0*13.097767*eff_mass);
   
           
@@ -1106,7 +1133,7 @@ int main (int argc, char* argv[])
         double r = sqrt(pow(x,2)+pow(y,2));
         double theta_r = atan2(y,x);
 
-        params_t params = {r,theta_r,kef,tau};
+        params_t params = {r,theta_r,kf,tau};
 
         results_t greens_functions = computeGreensFunction(params);
         std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
@@ -1158,7 +1185,7 @@ int main (int argc, char* argv[])
     fjint.open(filename_jint);
 
     double kinitial = 0.001;
-    std::vector<double> kes = linspace(kinitial,kfinal,EnergyPoints);
+    std::vector<double> kes = linspace(kinitial,kf,EnergyPoints);
     double dE = (kes[1]*kes[1]-kes[0]*kes[0])/(2.0*13.097767*eff_mass);
  
     // double ti = 0.0;
@@ -1203,24 +1230,25 @@ int main (int argc, char* argv[])
           double J_theta_so = (-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
 
 
-          // J_r +=  J_r_grad;
-          J_r +=   J_r_so;
-          // J_theta +=  J_theta_grad;
-          J_theta +=  J_theta_so;
+          J_r +=  J_r_grad + J_r_so;
+          // J_r +=   J_r_so;
+          J_theta +=  J_theta_grad + J_theta_so;
+          // J_theta +=  J_theta_so;
 
           msx += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
           msy += (-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
           msz += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
 
 
-        // }
+        }
         double J_x = J_r*cos(theta_r) - J_theta*sin(theta_r);
         double J_y = J_r*sin(theta_r) + J_theta*cos(theta_r);
-        mz += (r*cos(theta_r)*J_y - r*sin(theta_r)*J_x)*dE;
+        mz += (r*cos(theta_r)*J_y - r*sin(theta_r)*J_x);
+        // mz = sqrt(J_r*J_r + J_theta*J_theta);
         // std::cout << mz  << std::endl; 
-      }
-      fjint << r << "," << mz  << "," << msx  << "," << msy  << "," << msz << std::endl; 
-      std::cout << r << "," << mz  << "," << msx  << "," << msy  << "," << msz << std::endl; 
+      // }
+      // fjint << r << "," << mz  << "," << msx  << "," << msy  << "," << msz << std::endl; 
+       std::cout << r << "," << mz<< std::endl; 
     }
     
     fjint.close();
@@ -1229,28 +1257,34 @@ int main (int argc, char* argv[])
 
   // Density plot
   if (calc_density){
-    std::cout << "Calculating density plots for orbital and spin magnetization ..." << std::endl;
-    std::string filename = "magmom_energy_integrated_r_"+std::to_string(ratio)+".dat";
-    std::string filename_spin = "spinmag_energy_integrated_r_"+std::to_string(ratio)+".dat";
+    std::cout << "Calculating density plots for current, orbital and spin magnetization ..." << std::endl;
+    std::string filename = "magmom_alpha_"+std::to_string(alpha)+"_beta_"+std::to_string(beta)+".dat";
+    std::string filename_spin = "spinmag_alpha_"+std::to_string(alpha)+"_beta_"+std::to_string(beta)+".dat";
+    std::string filename_j = "current_alpha"+std::to_string(alpha)+"_beta_"+std::to_string(beta)+".dat";
     std::ofstream fmag;
     std::ofstream fspin;
+    std::ofstream fj;
     fmag.open(filename);
     fspin.open(filename_spin);
+    fj.open(filename_j);
 
     double sum_orb  = 0.0;
     double sum_spin  = 0.0;
+    double temperature = 150; // in Kelvin
+    double boltzmann_factor = (8.617333262145e-5)*temperature; // in 1/eV
 
-    double e_initial = -2.0*k0*k0/(2.0*13.097767*eff_mass);
-    double e_final = kef*kef/(2.0*13.097767*eff_mass);
-
-    std::vector<double> energies = linspace(e_initial,e_final,EnergyPoints);
+    // double e_initial = -2.0*k0*k0/(2.0*13.097767*eff_mass);
+    // double e_final = kef*kef/(2.0*13.097767*eff_mass);
+    std::cout << "kf = " << kf << std::endl;
+    double Einitial = -13.097767*eff_mass*pow(alpha+beta,2)/2.0+0.00001;
+    // double Einitial = -2.0(*k0*k0);
+    double Efinal = (kf*kf) ;
+    std::vector<double> energies = linspace(Einitial,Efinal,EnergyPoints);
     // double dE = (kes[1]*kes[1]-kes[0]*kes[0])/(2.0*13.097767*eff_mass);
-    double dE = abs(energies[1] - energies[0]);
-
-    
+    double dE = abs(energies[1]/(2.0*13.097767*eff_mass) - energies[0]/(2.0*13.097767*eff_mass)); // eV (k in 1/nm)
+    std::cout << "dE = " << dE << std::endl;
     for( double x: xs){
       for (double y: ys){
-
         double r = sqrt(pow(x,2)+pow(y,2));
         double theta_r = atan2(y,x);
 
@@ -1263,12 +1297,13 @@ int main (int argc, char* argv[])
         double sy = 0.0;
         double sz = 0.0;
 
-       
-
+      
         for (int i = 0; i < EnergyPoints; i++){
-          double k = sqrt(energies[i]*(2.0*13.097767*eff_mass));
-          params_t params = {r,theta_r,k,tau};
-
+          // double k = sqrt(energies[i]*(2.0*13.097767*eff_mass));
+          // double energy = kes[i]*kes[i]/(2.0*13.097767*eff_mass);
+          params_t params = {r,theta_r,energies[i],tau};
+          // std::cout << "E = " << kes[i]*kes[i]/(2.0*13.097767*eff_mass) << std::endl;
+          // std::cout << "k^2 = " << energies[i] << std::endl;
 
           // Energy dependent T-matrix in \hbar^{2}/m^{*}
           
@@ -1298,12 +1333,19 @@ int main (int argc, char* argv[])
           double J_theta_so = (-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
 
 
+          // J_r +=  (J_r_grad + J_r_so)*(1.0/(exp(-beta*(energies[i]-(kf*kf))/(2.0*13.097767*eff_mass))))*dE;
+          // J_theta +=  (J_theta_grad + J_theta_so)*(1.0/(exp(-beta*(energies[i]-(kf*kf))/(2.0*13.097767*eff_mass))))*dE;
+
+
           J_r +=  (J_r_grad + J_r_so)*dE;
           J_theta +=  (J_theta_grad + J_theta_so)*dE;
 
-          sx += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
-          sy += (-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
-          sz += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          // J_r +=  (J_r_grad)*dE;
+          // J_theta +=  (J_theta_grad)*dE;
+
+          // sx += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
+          // sy += (-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          // sz += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
         
         }
         double J_x = J_r*cos(theta_r) - J_theta*sin(theta_r);
@@ -1314,15 +1356,18 @@ int main (int argc, char* argv[])
         
         fmag << x << "," << y << "," << (x*J_y - y*J_x) << std::endl; // In units of \mu_{B}.nm^{-2}
         fspin << x << "," << y << "," << sx << "," << sy << "," << sz << std::endl;
+        fj << x << "," << y << "," << sqrt(J_x*J_x + J_y*J_y) << "," << sz << std::endl;
         
       } 
     }
+    std::cout << "Current density written in " << filename_j << std::endl;
     std::cout << "Orbital magnetization written in " << filename << std::endl;
     std::cout << "Spin magnetization written in " << filename_spin << std::endl;
     std::cout << "Total orbital magnetization = " <<sum_orb << std::endl;
     std::cout << "Total spin magnetization = " << sum_spin << std::endl;
     fmag.close();
     fspin.close();
+    fj.close();
   }
 
   // // Volume density plot
@@ -1527,49 +1572,49 @@ int main (int argc, char* argv[])
   //   std::cout << "Calculations written in " << integrated_magmom_filename << std::endl;
   // }
 
-  // // LDOS
-  // if (calc_ldos){
-  //   std::cout << "Calculating LDOS ..." << std::endl;
-  //   std::string filename = "ldos_r_"+std::to_string(ratio)+".dat";
+  // LDOS
+  if (calc_ldos){
+    std::cout << "Calculating LDOS ..." << std::endl;
+    std::string filename = "ldos_r_"+std::to_string(ratio)+".dat";
     
-  //   std::ofstream fldos;
+    std::ofstream fldos;
     
-  //   fldos.open(filename);
+    fldos.open(filename);
 
-  //   for( double x: xs){
-  //     for (double y: ys){
-
-  //       double r = sqrt(pow(x,2)+pow(y,2));
-  //       double theta_r = atan2(y,x);
-
-  //       double ldos = 0.0;
-
-  //       for (int i = 0; i < EnergyPoints; i++){
-  //         params_t params = {r,theta_r,kes[i],tau};
+    std::cout << "kf = " << kf << std::endl;
+    double Einitial = -(k0*k0)*(1 + sin(2*tau)) + 0.0001;
+    // double Einitial = 0.00001;
+    double Efinal = (kf*kf) ;
+    std::vector<double> energies = linspace(Einitial,Efinal,EnergyPoints);
+    // double dE = (kes[1]*kes[1]-kes[0]*kes[0])/(2.0*13.097767*eff_mass);
+    double dE = abs(energies[1]/(2.0*13.097767*eff_mass) - energies[0]/(2.0*13.097767*eff_mass));
 
 
-  //         // Energy dependent T-matrix in \hbar^{2}/m^{*}
-  //         t_up = t_ups[i];
-  //         t_dn = t_dns[i];
+    for( double x: xs){
+      for (double y: ys){
 
-  //         results_t greens_functions = computeGreensFunctionLDOS(params);
-  //         std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
-  //         std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);
-  //         std::complex<double> G_dn_up (greens_functions.dn_up_real , greens_functions.dn_up_imag);
+        double r = sqrt(pow(x,2)+pow(y,2));
+        double theta_r = atan2(y,x);
+
+        double ldos = 0.0;
+
+        for (int i = 0; i < EnergyPoints; i++){
+          params_t params = {r,theta_r,energies[i],tau};
+
+          results_t greens_functions = computeGreensFunctionLDOS(params);
+          std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
+          std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);
+          std::complex<double> G_dn_up (greens_functions.dn_up_real , greens_functions.dn_up_imag);
           
-  //         ldos +=  (-1.0/PI)*std::imag((t_up-t_dn)*(pow(G_diag,2) - G_dn_up*G_up_dn));
+          ldos +=  (-1.0/PI)*std::imag((t_up-t_dn)*(pow(G_diag,2) - G_dn_up*G_up_dn));
 
-  //       }
-       
-       
-        
-  //     fldos << x << "," << y << "," << ldos << std::endl; // In units of \mu_{B}.nm^{-2}
-        
-  //     } 
-  //   }
-  //   std::cout << "LDOS written in " << filename << std::endl;
-  //   fldos.close();
-  // }
+        }
+      fldos << x << "," << y << "," << ldos << std::endl; // In units of \mu_{B}.nm^{-2}  
+      } 
+    }
+    std::cout << "LDOS written in " << filename << std::endl;
+    fldos.close();
+  }
 
   auto end = std::chrono::steady_clock::now(); 
 
