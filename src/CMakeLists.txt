@@ -2,7 +2,6 @@ project(2DEG)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(GSL REQUIRED)
-find_package(FFTW3 REQUIRED)
 find_package(Boost 1.40 COMPONENTS program_options mpi REQUIRED )
 
 
