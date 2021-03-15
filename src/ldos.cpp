@@ -11,7 +11,9 @@
 
 
 #define PI M_PI
-double k0 = 1.0;
+// double k0 = 1.0;
+double k0 = 0.01241;
+double eff_mass = 0.067;
 
 template<typename T>
 std::vector<double> linspace(T start_in, T end_in, int num_in)
@@ -44,7 +46,7 @@ std::vector<double> linspace(T start_in, T end_in, int num_in)
 typedef struct {
   double r;
   double theta_r;
-  double ke;
+  double e;
   double tau;
 } params_t;
 
@@ -74,12 +76,12 @@ double radial_dn_up_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
   double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt((2.0*eff_mass*13.097767)*e+pow(k0,2)*f);
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
@@ -94,12 +96,12 @@ double radial_dn_up_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
   double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt((2.0*eff_mass*13.097767)*e+pow(k0,2)*f);
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
@@ -116,12 +118,12 @@ double radial_up_dn_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
   double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt((2.0*eff_mass*13.097767)*e+pow(k0,2)*f);
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
@@ -136,12 +138,12 @@ double radial_up_dn_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
   double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt((2.0*eff_mass*13.097767)*e+pow(k0,2)*f);
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
@@ -157,12 +159,12 @@ double radial_diagonal_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
   double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt((2.0*eff_mass*13.097767)*e+pow(k0,2)*f);
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
@@ -175,12 +177,13 @@ double radial_diagonal_imag(double theta_q, void * p) {
   params_t * params = (params_t *) p;
   double r = (params->r);
   double theta_r = (params->theta_r);
-  double ke = (params->ke);
+  double e = (params->e);
   double tau = (params->tau);
 
   double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(pow(ke,2)+pow(k0,2)*f);
+  double Q = sqrt((2.0*eff_mass*13.097767)*e+pow(k0,2)*f);
+  std::cout << "Q^2 = " << (2.0*eff_mass*13.097767)*e+pow(k0,2)*f << std::endl;
   double qplus = abs(Q+k0*sqrt(f));
   double qminus = abs(Q-k0*sqrt(f));
 
@@ -240,7 +243,7 @@ int main (int argc, char* argv[])
 {
   
   int N,EnergyPoints;
-  double tau,initial_coord,final_coord,kef;
+  double tau,initial_coord,final_coord,kf;
   bool calc_line, calc_density,calc_total;
 
   calc_line = false;
@@ -255,7 +258,7 @@ int main (int argc, char* argv[])
     std::cerr << "density - Energy integrated LDOS density plot" << std::endl;
     std::cerr << "OPTIONS:" << std::endl;
     std::cerr << "-N <number of grid points>" << std::endl;
-    std::cerr << "-En <number of energy points>" << std::endl;
+    std::cerr << "-Ne <number of energy points>" << std::endl;
     std::cerr << "-t <spin-orbit ratio comma-separated list> e.g. 0.4,0.5,0.6" << std::endl;
     std::cerr << "-i <initial coordinate> (in units of lambda_so)" << std::endl;
     std::cerr << "-f <final coordinate> (in units of lambda_so)" << std::endl;
@@ -312,7 +315,7 @@ int main (int argc, char* argv[])
     }
     else if (std::string(argv[i]) == "-kf") {
       if (i + 1 < argc) {
-        kef = std::stof(argv[i+1]); 
+        kf = std::stof(argv[i+1]); 
         i++;
       } else { 
         std::cerr << "-kf option requires one argument." << std::endl;
@@ -351,8 +354,9 @@ int main (int argc, char* argv[])
   std::vector<double> thetas = linspace(ti,tf,N);
 
   
-  double kei = 0.001;
-  std::vector<double> kes = linspace(kei,kef,EnergyPoints);
+  double Ei = -k0*k0*(1.0+2.0*cos(tau)*sin(tau))/(2.0*eff_mass*13.097767);
+  double Ef = kf*kf/(2.0*eff_mass*13.097767);
+  std::vector<double> energies = linspace(Ei,Ef,EnergyPoints);
 
   double t_up = 0.0;
   double t_dn = -(1.0/(2*PI));
@@ -362,7 +366,7 @@ int main (int argc, char* argv[])
   
   std::cout << "\n---------------[Parameters]---------------" << std::endl;
   std::cout << "tau : " << tau << std::endl;
-  std::cout << "kef : "<< kef << std::endl;
+  std::cout << "kf : "<< kf << std::endl;
   std::cout << "grid size :  [" << N << "," << N << "] points"<< std::endl;
   std::cout << "energy integration points : "<< EnergyPoints << std::endl;
   std::cout << "x :  [" << xi << "," << xf << "] (in units of 1/k0)"<< std::endl;
@@ -371,7 +375,7 @@ int main (int argc, char* argv[])
   auto start = std::chrono::steady_clock::now(); 
 
   if(calc_density) {
-    std::string filename = "ldos_energy_integrated_ke_"+std::to_string(kef)+"_tau_"+std::to_string(tau)+".dat";
+    std::string filename = "ldos_tau_"+std::to_string(tau)+".dat";
     std::ofstream fldos;
     fldos.open(filename);
     for( double x: xs){
@@ -382,8 +386,8 @@ int main (int argc, char* argv[])
       double ldos = 0.0;
       
 
-      for (double ke: kes){
-        params_t params = {r,theta_r,ke,tau};
+      for (double energy: energies){
+        params_t params = {r,theta_r,energy,tau};
         results_t greens_functions = computeGreensFunction(params);
         std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
         std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);

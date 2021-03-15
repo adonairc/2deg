@@ -92,6 +92,11 @@ int main (int argc, char* argv[])
 
   double max_y = *std::max_element(y_coords.begin(), y_coords.end());
   double min_y = *std::min_element(y_coords.begin(), y_coords.end());
+
+  std::cout << "Current file:" << std::endl;
+  std::cout << "x = ["<< min_x << "," << max_x << "]" << std::endl;
+  std::cout << "y = ["<< min_y << "," << max_y << "]" << std::endl;
+  
   double dx = abs(x_coords[1] - x_coords[0]);
   double dy = abs(y_coords[1] - y_coords[0]);
   // 
@@ -131,18 +136,18 @@ int main (int argc, char* argv[])
 
 
   // Super-cell z dimension
-  int Ncell = 101;
+  int Ncell = 100;
   
   double min_x_cell = -20.0;
   double max_x_cell = 20.0;
 
-  double d = 1.0;
+  double d = 10.0;
 
   double min_y_cell = -20.0;
   double max_y_cell = 20.0;
 
-  double min_z_cell = 0.0;
-  double max_z_cell = 3.0;
+  double min_z_cell = 9.0;
+  double max_z_cell = 11.0;
   
   std::vector<double> xs_cell = linspace(min_x_cell,max_x_cell,Ncell);
   std::vector<double> ys_cell = linspace(min_y_cell,max_x_cell,Ncell);
@@ -177,7 +182,7 @@ int main (int argc, char* argv[])
   // }
 
   // X-Y plane
-  double height = 2.0;
+  double height = 10.0;
   int k = -1;
   while (zs_cell[k+1] < height){
     k++;
@@ -194,6 +199,11 @@ int main (int argc, char* argv[])
      
       double x = xs_cell[i];
       double y = ys_cell[j];
+      double z = zs_cell[k];
+
+      double xdx = xs_cell[i+1];
+      double ydy = ys_cell[j+1];
+      double zdz = zs_cell[k+1];
 
       double xp, yp;
 
@@ -203,7 +213,7 @@ int main (int argc, char* argv[])
           xp = x_coords[jp+N*ip];
           yp = y_coords[jp+N*ip];
           // F1
-          phi += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)));
+          phi += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(z+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(z-d/2,2)));
           // F2
           //phi += (dyjx[jp + N*ip] - dxjy[jp + N*ip])*(1.0/(pow(x-xp,2) + pow(y-yp,2)))*( sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)) -  sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) + z*asinh((0.5*d - z)/sqrt(pow(x-xp,2)+pow(y-yp,2))) + z*asinh((0.5*d + z)/sqrt(pow(x-xp,2)+pow(y-yp,2))));
 
@@ -211,7 +221,7 @@ int main (int argc, char* argv[])
           xp = x_coords[jp+N*(ip+1)];
           yp = y_coords[jp+N*(ip+1)];
           // F1
-          phi_dx += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)));
+          phi_dx += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(xdx-xp,2)+pow(y-yp,2)+pow(z+d/2,2)) - 1.0/sqrt(pow(xdx-xp,2)+pow(y-yp,2)+pow(z-d/2,2)));
           // F2
           //phi_dx += (dyjx[jp + N*ip] - dxjy[jp + N*ip])*(1.0/(pow(x-xp,2) + pow(y-yp,2)))*( sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)) -  sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) + z*asinh((0.5*d - z)/sqrt(pow(x-xp,2)+pow(y-yp,2))) + z*asinh((0.5*d + z)/sqrt(pow(x-xp,2)+pow(y-yp,2))));
 
@@ -220,7 +230,7 @@ int main (int argc, char* argv[])
           xp = x_coords[(jp+1)+N*ip];
           yp = y_coords[(jp+1)+N*ip];
           // F1
-          phi_dy += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)));
+          phi_dy += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(ydy-yp,2)+pow(z+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(ydy-yp,2)+pow(z-d/2,2)));
           // F2
           //phi_dy += (dyjx[jp + N*ip] - dxjy[jp + N*ip])*(1.0/(pow(x-xp,2) + pow(y-yp,2)))*( sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)) -  sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) + z*asinh((0.5*d - z)/sqrt(pow(x-xp,2)+pow(y-yp,2))) + z*asinh((0.5*d + z)/sqrt(pow(x-xp,2)+pow(y-yp,2))));
 
@@ -229,7 +239,7 @@ int main (int argc, char* argv[])
           xp = x_coords[jp+N*ip];
           yp = y_coords[jp+N*ip];
           // F1
-          phi_dz += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)));
+          phi_dz += (xp*jy[jp + N*ip]- yp*jx[jp + N*ip])*(1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(zdz+d/2,2)) - 1.0/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(zdz-d/2,2)));
           // F2
           //phi_dz += (dyjx[jp + N*ip] - dxjy[jp + N*ip])*(1.0/(pow(x-xp,2) + pow(y-yp,2)))*( sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x-d/2,2)) -  sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(x+d/2,2)) + z*asinh((0.5*d - z)/sqrt(pow(x-xp,2)+pow(y-yp,2))) + z*asinh((0.5*d + z)/sqrt(pow(x-xp,2)+pow(y-yp,2))));
 
