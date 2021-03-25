@@ -45,9 +45,12 @@ int main (int argc, char* argv[])
 
   std::ifstream infile(argv[1]);
   std::ofstream field;
+  std::ofstream dxjy_file;
+  std::ofstream dyjx_file;
 
   field.open("fringe_field_envelope.dat");
-
+  dxjy_file.open("derivative_djy_dx.dat");
+  dyjx_file.open("derivative_djx_dy.dat");
   std::vector<double> x_coords;
   std::vector<double> y_coords;
 
@@ -95,8 +98,12 @@ int main (int argc, char* argv[])
       jy.push_back(js[j+N*i][3]);
       x_coords.push_back(js[j+N*i][0]);
       y_coords.push_back(js[j+N*i][1]);
+      dxjy_file << js[j+N*i][0] << "," <<js[j+N*i][1] <<"," << (js[j+N*(i+1)][3] - js[j+N*i][3])/dx << std::endl;
+      dyjx_file << js[j+N*i][0] << "," <<js[j+N*i][1] <<"," << (js[(j+1)+N*i][2] - js[j+N*i][2])/dy << std::endl;
     }
   }
+  dxjy_file.close();
+  dyjx_file.close();
 
   // double max_x = *std::max_element(x_coords.begin(), x_coords.end());
   // double min_x = *std::min_element(x_coords.begin(), x_coords.end());
@@ -113,10 +120,10 @@ int main (int argc, char* argv[])
 
   // Field calculation cell
   int Ncell = 100;
-  double min_x_cell = -30.0;
-  double max_x_cell = 30.0;
-  double min_y_cell = -30.0;
-  double max_y_cell = 30.0;
+  double min_x_cell = -50.0;
+  double max_x_cell = 50.0;
+  double min_y_cell = -50.0;
+  double max_y_cell = 50.0;
   
   std::vector<double> xs_cell = linspace(min_x_cell,max_x_cell,Ncell);
   std::vector<double> ys_cell = linspace(min_y_cell,max_x_cell,Ncell);
@@ -189,7 +196,7 @@ int main (int argc, char* argv[])
       double bx = -(4*M_PI*1e2)*(phi_dx - phi)/dx;
       double by = -(4*M_PI*1e2)*(phi_dy - phi)/dy;
       double bz = -(4*M_PI*1e2)*(phi_dz - phi)/dz;
-      field << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx*bx + by*by + bz*bz) << std::endl;
+      field << xs_cell[i] << "," << ys_cell[j] << "," << bx << "," << by << "," <<bz << std::endl;
       // field << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx_biot*bx_biot + by_biot*by_biot + bz_biot*bz_biot) << std::endl;
       // std::cout << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx*bx + by*by + bz*bz) << std::endl;
 

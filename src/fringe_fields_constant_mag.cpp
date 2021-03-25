@@ -248,7 +248,7 @@ int main (int argc, char* argv[])
       double bx = -(phi_dx - phi)/dx;
       double by = -(phi_dy - phi)/dy;
       double bz = -(phi_dz - phi)/dz;
-      field << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx*bx + by*by + bz*bz) << std::endl;
+      field << xs_cell[i] << "," << ys_cell[j] << "," << bx << "," << by << "," <<bz << std::endl;
     }
   }
 
