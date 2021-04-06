@@ -57,6 +57,11 @@ int main (int argc, char* argv[])
   std::vector<double> full_x_coords;
   std::vector<double> full_y_coords;
 
+  // Slab
+  Nz = 20;
+  double d = 10.0;
+  double height = 20.0 + d/2.0;  // in nm above the slab
+
   for( std::string line; getline( infile, line ); )
   {
     if (line[0] != '#'){
@@ -83,9 +88,7 @@ int main (int argc, char* argv[])
   double dy = abs(full_y_coords[1] - full_y_coords[0]);
   double dx =dy;
   
-  // Slab
-  Nz = 20;
-  double d = 10.0;
+  
   std::vector<double> z_coords = linspace(-d/2.0,d/2.0,Nz);
 
  //
@@ -130,15 +133,13 @@ int main (int argc, char* argv[])
 
   // To calculate the z-component of the B-field 
   std::vector<double> zs_cell;
-  double dz = 1e-4;
-  double height = 20.0 + d/2.0;  // 10 nm above the slab
+  double dz = dx;
+  
   zs_cell.push_back(height);
   zs_cell.push_back(height+dz);
 
-  
   dx = abs(xs_cell[1]-xs_cell[0]);
   dy = abs(ys_cell[1]-ys_cell[0]);
-
 
   // X-Y plane  
   std::cout << "Calculating B-field at height " << height << std::endl;
@@ -177,34 +178,24 @@ int main (int argc, char* argv[])
             zp = z_coords[kp];
 
             double div = -(1.0/d)*cos(M_PI*zp/d)*cos(M_PI*zp/d)*(zp * dxjy[jp + N*ip]) + (1.0/d)*cos(M_PI*zp/d)*cos(M_PI*zp/d)*(zp * dyjx[jp + N*ip]) - (2*M_PI/(d*d))*(xp*jy[jp + N*ip]-yp*jx[jp + N*ip])*sin(M_PI*zp/d)*cos(M_PI*zp/d);
-            // double div = - (2*M_PI/(d*d))*(xp*jy[jp + N*ip]-yp*jx[jp + N*ip])*sin(M_PI*zp/d)*cos(M_PI*zp/d);
             phi += div/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(z-zp,2));
-            // std::cout <<  dxjy[jp + N*ip]<< std::endl;
 
             phi_dx += div/sqrt(pow(xdx-xp,2)+pow(y-yp,2)+pow(z-zp,2));
             phi_dy += div/sqrt(pow(x-xp,2)+pow(ydy-yp,2)+pow(z-zp,2));
             phi_dz += div/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(zdz-zp,2));
 
-            // // Biot-Savart Law
-            // bx_biot += (height-d/2)*jy[jp + N*ip]/sqrt(pow(pow(x-xp,2)+pow(y-yp,2)+pow((height-d/2),2),3));
-            // by_biot += -(height-d/2)*jx[jp + N*ip]/sqrt(pow(pow(x-xp,2)+pow(y-yp,2)+pow((height-d/2),2),3));
-            // bz_biot += ((y-yp)*jx[jp + N*ip]-(x-xp)*jy[jp + N*ip])/sqrt(pow(pow(x-xp,2)+pow(y-yp,2)+pow((height-d/2),2),3));
-
           }
         }
       }
+
+      // in units ot nano Tesla
+
       double bx = -(4*M_PI*1e2)*(phi_dx - phi)/dx;
       double by = -(4*M_PI*1e2)*(phi_dy - phi)/dy;
       double bz = -(4*M_PI*1e2)*(phi_dz - phi)/dz;
       field << xs_cell[i] << "," << ys_cell[j] << "," << bx << "," << by << "," <<bz << std::endl;
-      // field << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx_biot*bx_biot + by_biot*by_biot + bz_biot*bz_biot) << std::endl;
-      // std::cout << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx*bx + by*by + bz*bz) << std::endl;
-
     }
   }
-
   field.close();
-
-
   return 0;
 }

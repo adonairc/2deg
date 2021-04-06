@@ -748,9 +748,9 @@ int main (int argc, char* argv[])
           // J_r +=  (J_r_grad)*dE;
           // J_theta +=  (J_theta_grad)*dE;
 
-           sx += (eff_mass*13.097767/(4.0*pow(M_PI,5)))*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
-          sy += (eff_mass*13.097767/(4.0*pow(M_PI,5)))*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
-          sz += (eff_mass*113.097767/(4.0*pow(M_PI,5)))*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
+          sx += (eff_mass*13.097767/(4.0*pow(M_PI,4)))*(-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          sy += (eff_mass*13.097767/(4.0*pow(M_PI,4)))*(-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          sz += (eff_mass*13.097767/(4.0*pow(M_PI,4)))*(-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
         
         }
         double J_x = J_r*cos(theta_r) - J_theta*sin(theta_r);

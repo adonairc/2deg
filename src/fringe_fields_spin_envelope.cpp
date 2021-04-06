@@ -158,10 +158,6 @@ int main (int argc, char* argv[])
             double div = (1.0/d)*cos(M_PI*zp/d)*cos(M_PI*zp/d)*dxsx[jp + N*ip] + (1.0/d)*cos(M_PI*zp/d)*cos(M_PI*zp/d)*dysy[jp + N*ip] - (M_PI/(d*d))*sz[jp + N*ip]*sin(2*M_PI*zp/d);
             phi += div/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(z-zp,2));
 
-
-            
-            // std::cout <<  dxjy[jp + N*ip]<< std::endl;
-
             phi_dx += div/sqrt(pow(xdx-xp,2)+pow(y-yp,2)+pow(z-zp,2));
             phi_dy += div/sqrt(pow(x-xp,2)+pow(ydy-yp,2)+pow(z-zp,2));
             phi_dz += div/sqrt(pow(x-xp,2)+pow(y-yp,2)+pow(zdz-zp,2));
@@ -169,9 +165,10 @@ int main (int argc, char* argv[])
           }
         }
       }
-      double bx = -(phi_dx - phi)/dx;
-      double by = -(phi_dy - phi)/dy;
-      double bz = -(phi_dz - phi)/dz;
+      // in units ot nano Tesla
+      double bx = -(4*M_PI*1e2)*(phi_dx - phi)/dx;
+      double by = -(4*M_PI*1e2)*(phi_dy - phi)/dy;
+      double bz = -(4*M_PI*1e2)*(phi_dz - phi)/dz;
       field << xs_cell[i] << "," << ys_cell[j] << "," << bx << "," << by << "," << bz << std::endl;
       // std::cout << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx*bx + by*by + bz*bz) << std::endl;
 

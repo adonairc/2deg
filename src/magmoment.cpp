@@ -402,7 +402,7 @@ results_t computeGreensFunction(params_t params){
   
   double error;
   double control = 1e-7;
-  double limit = 10000;
+  double limit = 1000;
 
   gsl_integration_workspace * w = gsl_integration_workspace_alloc (limit);
   double r = (params.r);
@@ -749,11 +749,11 @@ int main (int argc, char* argv[])
   // Energy-independent t-matrix
 
   // Resonant scaterring
-  // Delta_down = pi/2 -> t_dn = 0
-  // Delta_up =  pi -> t_up = -2i
+  // Delta_down = pi/2 -> t_dn = 0.0
+  // Delta_up =  pi -> t_up = -2.0
 
   t_up = std::complex<double>(0.0,0.0);
-  t_dn = std::complex<double>(-1.0,0.0);
+  t_dn = std::complex<double>(-2.0,0.0);
 
 
   // t_up = std::complex<double>(0.0,0.0);
@@ -1207,7 +1207,7 @@ int main (int argc, char* argv[])
           std::complex<double> A_t_up_dn = ii*cos(theta_r)*std::exp(-ii*tau)- sin(theta_r)*std::exp(ii*tau);
           std::complex<double> A_t_dn_up = -ii*cos(theta_r)*std::exp(ii*tau)- sin(theta_r)*std::exp(-ii*tau);
 
-          // Current in units of nA/nm.eV
+          // Current in units of nA/nm
 
           double J_r_grad = (38740.5/2.0)*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_r_dn_up*G_up_dn - Grad_r_up_dn*G_dn_up) );
           double J_theta_grad = (38740.5/2.0)*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_theta_dn_up*G_up_dn - Grad_theta_up_dn*G_dn_up) ); 
@@ -1227,10 +1227,10 @@ int main (int argc, char* argv[])
           // J_theta +=  (J_theta_grad)*dE;
 
 
-          // In units of mu_bohr / nm^2
-          sx += (eff_mass*13.097767/(4.0*pow(M_PI,5)))*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
-          sy += (eff_mass*13.097767/(4.0*pow(M_PI,5)))*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
-          sz += (eff_mass*113.097767/(4.0*pow(M_PI,5)))*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
+          // In units of Bohr magneton / nm^2
+          sx += (eff_mass*13.097767/(4.0*pow(M_PI,4)))*(-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          sy += (eff_mass*13.097767/(4.0*pow(M_PI,4)))*(-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          sz += (eff_mass*13.097767/(4.0*pow(M_PI,4)))*(-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
         
         }
         double J_x = -(J_r*cos(theta_r) - J_theta*sin(theta_r));
