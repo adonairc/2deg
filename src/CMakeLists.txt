@@ -10,16 +10,15 @@ find_package(Boost 1.40 COMPONENTS program_options mpi REQUIRED )
 
 
 
-
 link_directories(/usr/local/lib)
 include_directories(/usr/local/include)
 include_directories( ${Boost_INCLUDE_DIR} )
 
-#add_executable(magmoment_mpi magmoment_mpi.cpp)
+add_executable(magmoment_mpi magmoment_mpi.cpp)
 #target_link_libraries(magmoment_energy GSL::gsl GSL::gslcblas Boost::mpi Boost::program_options)
-#target_link_libraries(magmoment_mpi GSL::gsl GSL::gslcblas Boost::mpi Boost::program_options)
-#target_link_libraries(magmoment_mpi ${Boost_LIBRARIES})
-#target_link_libraries(magmoment_mpi ${MPI_LIBRARIES})
+target_link_libraries(magmoment_mpi GSL::gsl GSL::gslcblas Boost::mpi Boost::program_options)
+target_link_libraries(magmoment_mpi ${Boost_LIBRARIES})
+target_link_libraries(magmoment_mpi ${MPI_LIBRARIES})
 
 add_executable(ldos ldos.cpp)
 add_executable(utils utils.cpp)

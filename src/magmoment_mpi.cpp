@@ -10,12 +10,11 @@
 #include <vector>
 #include <boost/mpi.hpp>
 
-
 #define PI M_PI
 double k0 = 0.01241; // GaAs (beta ~ 10 meV.nm)
 namespace po = boost::program_options;
-namespace mpi = boost::mpi;
 
+namespace mpi = boost::mpi;
 
 template<typename T>
 std::vector<double> linspace(T start_in, T end_in, int num_in)
@@ -61,15 +60,11 @@ typedef struct{
   double dn_up_real;
   double dn_up_imag;
   // Gradients
-  double grad_r_diag_real;
-  double grad_r_diag_imag;
   double grad_r_up_dn_real;
   double grad_r_up_dn_imag;
   double grad_r_dn_up_real;
   double grad_r_dn_up_imag;
 
-  double grad_theta_diag_real;
-  double grad_theta_diag_imag;
   double grad_theta_up_dn_real;
   double grad_theta_up_dn_imag;
   double grad_theta_dn_up_real;
@@ -86,48 +81,6 @@ void error_handler (const char * reason, const char * file, int line, int gsl_er
 }
 
 // Radial gradients
-double grad_r_diag_real(double theta_q, void * p) {
-  params_t * params = (params_t *) p;
-  double r = (params->r);
-  double theta_r = (params->theta_r);
-  double e = (params->e);
-  double tau = (params->tau);
-
-  double rho = r*cos(theta_q-theta_r);
-  double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(e+pow(k0,2)*f) ;
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
-
-  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
-  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
-
-
-  double T1 = (qplus*qplus*R2plus + qminus*qminus*R2minus)*cos(theta_q-theta_r);
-  double T2 = (qminus + qplus)/r;
-
-  return((1.0/(2*M_PI*M_PI))*(T1+T2)/Q);
-}
-
-double grad_r_diag_imag(double theta_q, void * p) {
-  params_t * params = (params_t *) p;
-  double r = (params->r);
-  double theta_r = (params->theta_r);
-  double e = (params->e);
-  double tau = (params->tau);
-
-  double rho = r*cos(theta_q-theta_r);
-  double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
-
-
-  double T1 = (PI/2.0)*(qplus*qplus*sin(qplus*rho) + qminus*qminus*sin(qminus*rho))*cos(theta_q-theta_r);
-
-  return((1.0/(2*M_PI*M_PI))*T1/Q);
-}
-
 
 double grad_r_dn_up_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
@@ -136,11 +89,11 @@ double grad_r_dn_up_real(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
   double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
@@ -149,7 +102,7 @@ double grad_r_dn_up_real(double theta_q, void * p) {
   double T1 = (PI/2.0)*cos(theta_q-tau)*(-qplus*qplus*cos(qplus*rho) + qminus*qminus*cos(qminus*rho));
   double T2 = sin(theta_q+tau)*(qplus*qplus*R1plus - qminus*qminus*R1minus);
 
-  return((1.0/(2*M_PI*M_PI))*(T1+T2)*cos(theta_q-theta_r)/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*(T1+T2)*cos(theta_q-theta_r)/(Q*sqrt(f)));
 }
 
 double grad_r_dn_up_imag(double theta_q, void * p) {
@@ -159,11 +112,11 @@ double grad_r_dn_up_imag(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
   double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
@@ -173,7 +126,7 @@ double grad_r_dn_up_imag(double theta_q, void * p) {
   
   double T2 = (PI/2.0)*sin(theta_q+tau)*(qplus*qplus*cos(qplus*rho) - qminus*qminus*cos(qminus*rho));
 
-  return((1.0/(2*M_PI*M_PI))*(T1+T2)*cos(theta_q-theta_r)/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*(T1+T2)*cos(theta_q-theta_r)/(Q*sqrt(f)));
 }
 
 double grad_r_up_dn_real(double theta_q, void * p) {
@@ -183,11 +136,11 @@ double grad_r_up_dn_real(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
   double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
@@ -196,7 +149,7 @@ double grad_r_up_dn_real(double theta_q, void * p) {
   double T1 = (PI/2.0)*cos(theta_q-tau)*(-qplus*qplus*cos(qplus*rho) + qminus*qminus*cos(qminus*rho));
   double T2 = -sin(theta_q+tau)*(qplus*qplus*R1plus - qminus*qminus*R1minus);
 
-  return((1.0/(2*M_PI*M_PI))*(T1+T2)*cos(theta_q-theta_r)/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*(T1+T2)*cos(theta_q-theta_r)/(Q*sqrt(f)));
 }
 
 double grad_r_up_dn_imag(double theta_q, void * p) {
@@ -206,11 +159,11 @@ double grad_r_up_dn_imag(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
   double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
@@ -221,52 +174,11 @@ double grad_r_up_dn_imag(double theta_q, void * p) {
   double T2 = -(PI/2.0)*sin(theta_q+tau)*(qplus*qplus*cos(qplus*rho) - qminus*qminus*cos(qminus*rho));
 
 
-  return((1.0/(2*M_PI*M_PI))*(T1+T2)*cos(theta_q-theta_r)/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*(T1+T2)*cos(theta_q-theta_r)/(Q*sqrt(f)));
 }
 
 
 // Angular gradients
-
-double grad_theta_diag_real(double theta_q, void * p) {
-  params_t * params = (params_t *) p;
-  double r = (params->r);
-  double theta_r = (params->theta_r);
-  double e = (params->e);
-  double tau = (params->tau);
-
-  double rho = r*cos(theta_q-theta_r);
-  double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
-
-  double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
-  double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
-
-
-  double T1 = (qplus*qplus*R2plus + qminus*qminus*R2minus)*sin(theta_q-theta_r);
-  double T2 = -(qminus + qplus)*tan(theta_q-theta_r)/r;
-
-  return(-(1.0/(2*M_PI*M_PI))*(T1+T2)/Q);
-}
-
-double grad_theta_diag_imag(double theta_q, void * p) {
-  params_t * params = (params_t *) p;
-  double r = (params->r);
-  double theta_r = (params->theta_r);
-  double e = (params->e);
-  double tau = (params->tau);
-
-  double rho = r*cos(theta_q-theta_r);
-  double f = 1 + sin(2*tau)*sin(2*theta_q);
-  double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
-
-  double T1 = (PI/2.0)*(qplus*qplus*sin(qplus*rho) + qminus*qminus*sin(qplus*rho))*sin(theta_q-tau);
-  return(-(1.0/(2*M_PI*M_PI))*T1/Q);
-}
-
 
 double grad_theta_dn_up_real(double theta_q, void * p) {
   params_t * params = (params_t *) p;
@@ -275,11 +187,11 @@ double grad_theta_dn_up_real(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
   double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
@@ -288,7 +200,7 @@ double grad_theta_dn_up_real(double theta_q, void * p) {
   double T1 = (PI/2.0)*cos(theta_q-tau)*(-qplus*qplus*cos(qplus*rho) + qminus*qminus*cos(qminus*rho));
   double T2 = sin(theta_q+tau)*(qplus*qplus*R1plus - qminus*qminus*R1minus);
 
-  return((1.0/(2*M_PI*M_PI))*(T1+T2)*sin(theta_q-theta_r)/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*(T1+T2)*sin(theta_q-theta_r)/(Q*sqrt(f)));
 }
 
 double grad_theta_dn_up_imag(double theta_q, void * p) {
@@ -298,11 +210,11 @@ double grad_theta_dn_up_imag(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
   double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
@@ -312,7 +224,7 @@ double grad_theta_dn_up_imag(double theta_q, void * p) {
   
   double T2 = (PI/2.0)*sin(theta_q+tau)*(qplus*qplus*cos(qplus*rho) - qminus*qminus*cos(qminus*rho));
 
-  return((1.0/(2*M_PI*M_PI))*(T1+T2)*sin(theta_q-theta_r)/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*(T1+T2)*sin(theta_q-theta_r)/(Q*sqrt(f)));
 }
 
 double grad_theta_up_dn_real(double theta_q, void * p) {
@@ -322,11 +234,11 @@ double grad_theta_up_dn_real(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
   double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
@@ -335,7 +247,7 @@ double grad_theta_up_dn_real(double theta_q, void * p) {
   double T1 = (PI/2.0)*cos(theta_q-tau)*(-qplus*qplus*cos(qplus*rho) + qminus*qminus*cos(qminus*rho));
   double T2 = -sin(theta_q+tau)*(qplus*qplus*R1plus - qminus*qminus*R1minus);
 
-  return((1.0/(2*M_PI*M_PI))*(T1+T2)*sin(theta_q-theta_r)/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*(T1+T2)*sin(theta_q-theta_r)/(Q*sqrt(f)));
 }
 
 double grad_theta_up_dn_imag(double theta_q, void * p) {
@@ -345,11 +257,11 @@ double grad_theta_up_dn_imag(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R1plus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
   double R1minus = -cos(qminus*rho)*gsl_sf_Ci(abs(qminus*rho))-sin(qminus*rho)*gsl_sf_Si(qminus*rho);
@@ -359,7 +271,7 @@ double grad_theta_up_dn_imag(double theta_q, void * p) {
   
   double T2 = -(PI/2.0)*sin(theta_q+tau)*(qplus*qplus*cos(qplus*rho) - qminus*qminus*cos(qminus*rho));
 
-  return((1.0/(2*M_PI*M_PI))*(T1+T2)*sin(theta_q-theta_r)/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*(T1+T2)*sin(theta_q-theta_r)/(Q*sqrt(f)));
 }
 
 // G0
@@ -370,17 +282,17 @@ double radial_dn_up_real(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
   double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
 
   double S = qplus*(sin(theta_q+tau)*R2plus - (PI/2.0)*cos(theta_q-tau)*sin(qplus*rho)) - qminus*(sin(theta_q+tau)*R2minus - (PI/2.0)*cos(theta_q-tau)*sin(qminus*rho));
-  return((1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
 }
 
 double radial_dn_up_imag(double theta_q, void * p) {
@@ -390,18 +302,18 @@ double radial_dn_up_imag(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
 
   double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
   double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
 
   double S = qplus*(cos(theta_q-tau)*R2plus + (PI/2.0)*sin(theta_q+tau)*sin(qplus*rho)) - qminus*(cos(theta_q-tau)*R2minus+(PI/2.0)*sin(theta_q+tau)*sin(qminus*rho));
-  return((1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
 }
 
 
@@ -412,17 +324,17 @@ double radial_up_dn_real(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
   double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
 
   double S = -qplus*(sin(theta_q+tau)*R2plus + (PI/2.0)*cos(theta_q-tau)*sin(qplus*rho)) + qminus*(sin(theta_q+tau)*R2minus + (PI/2.0)*cos(theta_q-tau)*sin(qminus*rho));
-  return((1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
 }
 
 double radial_up_dn_imag(double theta_q, void * p) {
@@ -432,17 +344,17 @@ double radial_up_dn_imag(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
   double R2plus = cos(qplus*rho)*gsl_sf_Si(qplus*rho)-sin(qplus*rho)*gsl_sf_Ci(abs(qplus*rho));
   double R2minus = cos(qminus*rho)*gsl_sf_Si(qminus*rho)-sin(qminus*rho)*gsl_sf_Ci(abs(qminus*rho));
 
   double S = qplus*(cos(theta_q-tau)*R2plus - (PI/2.0)*sin(theta_q+tau)*sin(qplus*rho)) - qminus*(cos(theta_q-tau)*R2minus - (PI/2.0)*sin(theta_q+tau)*sin(qminus*rho));
-  return((1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
+  return(-(1.0/(2*M_PI*M_PI))*S/(Q*sqrt(f)));
 }
 
 
@@ -453,11 +365,11 @@ double radial_diagonal_real(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
 
   double Iplus = -cos(qplus*rho)*gsl_sf_Ci(abs(qplus*rho))-sin(qplus*rho)*gsl_sf_Si(qplus*rho);
@@ -475,11 +387,11 @@ double radial_diagonal_imag(double theta_q, void * p) {
   double e = (params->e);
   double tau = (params->tau);
 
-  double rho = r*cos(theta_q-theta_r);
+  double rho = abs(r*cos(theta_q-theta_r));
   double f = 1 + sin(2*tau)*sin(2*theta_q);
   double Q = sqrt(abs(e+pow(k0,2)*f));
-  double qplus = abs(Q+k0*sqrt(f));
-  double qminus = abs(Q-k0*sqrt(f));
+  double qplus = Q+k0*sqrt(f);
+  double qminus = Q-k0*sqrt(f);
 
 
   return(-(1.0/(2*M_PI*M_PI))*(PI/2)*(qplus*cos(qplus*rho) + qminus*cos(qminus*rho))/Q);
@@ -488,10 +400,12 @@ double radial_diagonal_imag(double theta_q, void * p) {
 
 results_t computeGreensFunction(params_t params){
   // Integration parameters
-  gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
+  
   double error;
-  double control = 1e-6;
+  double control = 1e-7;
+  double limit = 10000;
 
+  gsl_integration_workspace * w = gsl_integration_workspace_alloc (limit);
   double r = (params.r);
   double theta_r = (params.theta_r);
 
@@ -516,321 +430,93 @@ results_t computeGreensFunction(params_t params){
   double result_grad_theta_dn_up_real;
   double result_grad_theta_dn_up_imag;
 
-  // std::cout << "computeGreensFunction() r = "<<r << ", theta_r = "<< theta_r << ", ke = "<< params.ke << ", tau = "<< params.tau << std::endl;
+  // std::cout << "computeGreensFunction() r = "<<r << ", theta_r = "<< theta_r << ", tau = "<< params.tau << std::endl;
     // Diagonal
   gsl_function F_diag_real;
   F_diag_real.function = &radial_diagonal_real;
   F_diag_real.params = &params;
-  gsl_integration_qags (&F_diag_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_diag_real, &error);
+  gsl_integration_qags (&F_diag_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_diag_real, &error);
 
   gsl_function F_diag_imag;
   F_diag_imag.function = &radial_diagonal_imag;
   F_diag_imag.params = &params;
-  gsl_integration_qags (&F_diag_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_diag_imag, &error);
+  gsl_integration_qags (&F_diag_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_diag_imag, &error);
 
   // Up - Down
   gsl_function F_up_dn_real;
   F_up_dn_real.function = &radial_up_dn_real;
   F_up_dn_real.params = &params;
-  gsl_integration_qags (&F_up_dn_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_up_dn_real, &error);
+  gsl_integration_qags (&F_up_dn_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_up_dn_real, &error);
 
   gsl_function F_up_dn_imag;
   F_up_dn_imag.function = &radial_up_dn_imag;
   F_up_dn_imag.params = &params;
-  gsl_integration_qags (&F_up_dn_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_up_dn_imag, &error);
+  gsl_integration_qags (&F_up_dn_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_up_dn_imag, &error);
 
   // Down - Up
   gsl_function F_dn_up_real;
   F_dn_up_real.function = &radial_dn_up_real;
   F_dn_up_real.params = &params;
-  gsl_integration_qags (&F_dn_up_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_dn_up_real, &error);
+  gsl_integration_qags (&F_dn_up_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_dn_up_real, &error);
 
   gsl_function F_dn_up_imag;
   F_dn_up_imag.function = &radial_dn_up_imag;
   F_dn_up_imag.params = &params;
-  gsl_integration_qags (&F_dn_up_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_dn_up_imag, &error);
+  gsl_integration_qags (&F_dn_up_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_dn_up_imag, &error);
 
 
 
   // Radial Gradients
 
-  gsl_function Grad_r_diag_real;
-  Grad_r_diag_real.function = &grad_r_diag_real;
-  Grad_r_diag_real.params = &params;
-  gsl_integration_qags (&Grad_r_diag_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_diag_real, &error);
-
-  gsl_function Grad_r_diag_imag;
-  Grad_r_diag_imag.function = &grad_r_diag_imag;
-  Grad_r_diag_imag.params = &params;
-  gsl_integration_qags (&Grad_r_diag_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_diag_imag, &error);
 
   gsl_function Grad_r_up_dn_real;
   Grad_r_up_dn_real.function = &grad_r_up_dn_real;
   Grad_r_up_dn_real.params = &params;
-  gsl_integration_qags (&Grad_r_up_dn_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_up_dn_real, &error);
+  gsl_integration_qags (&Grad_r_up_dn_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_grad_r_up_dn_real, &error);
 
   gsl_function Grad_r_up_dn_imag;
   Grad_r_up_dn_imag.function = &grad_r_up_dn_imag;
   Grad_r_up_dn_imag.params = &params;
-  gsl_integration_qags (&Grad_r_up_dn_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_up_dn_imag, &error);
+  gsl_integration_qags (&Grad_r_up_dn_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_grad_r_up_dn_imag, &error);
 
   gsl_function Grad_r_dn_up_real;
   Grad_r_dn_up_real.function = &grad_r_dn_up_real;
   Grad_r_dn_up_real.params = &params;
-  gsl_integration_qags (&Grad_r_dn_up_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_dn_up_real, &error);
+  gsl_integration_qags (&Grad_r_dn_up_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_grad_r_dn_up_real, &error);
 
   gsl_function Grad_r_dn_up_imag;
   Grad_r_dn_up_imag.function = &grad_r_dn_up_imag;
   Grad_r_dn_up_imag.params = &params;
-  gsl_integration_qags (&Grad_r_dn_up_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_dn_up_imag, &error);
+  gsl_integration_qags (&Grad_r_dn_up_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_grad_r_dn_up_imag, &error);
    
 
   // Angular Gradients
 
-  gsl_function Grad_theta_diag_real;
-  Grad_theta_diag_real.function = &grad_theta_diag_real;
-  Grad_theta_diag_real.params = &params;
-  gsl_integration_qags (&Grad_theta_diag_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_diag_real, &error);
-
-  gsl_function Grad_theta_diag_imag;
-  Grad_theta_diag_imag.function = &grad_theta_diag_imag;
-  Grad_theta_diag_imag.params = &params;
-  gsl_integration_qags (&Grad_theta_diag_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_diag_imag, &error);
-
   gsl_function Grad_theta_up_dn_real;
   Grad_theta_up_dn_real.function = &grad_theta_up_dn_real;
   Grad_theta_up_dn_real.params = &params;
-  gsl_integration_qags (&Grad_theta_up_dn_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_up_dn_real, &error);
+  gsl_integration_qags (&Grad_theta_up_dn_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_grad_theta_up_dn_real, &error);
 
   gsl_function Grad_theta_up_dn_imag;
   Grad_theta_up_dn_imag.function = &grad_theta_up_dn_imag;
   Grad_theta_up_dn_imag.params = &params;
-  gsl_integration_qags (&Grad_theta_up_dn_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_up_dn_imag, &error);
+  gsl_integration_qags (&Grad_theta_up_dn_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_grad_theta_up_dn_imag, &error);
 
   gsl_function Grad_theta_dn_up_real;
   Grad_theta_dn_up_real.function = &grad_theta_dn_up_real;
   Grad_theta_dn_up_real.params = &params;
-  gsl_integration_qags (&Grad_theta_dn_up_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_dn_up_real, &error);
+  gsl_integration_qags (&Grad_theta_dn_up_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_grad_theta_dn_up_real, &error);
 
   gsl_function Grad_theta_dn_up_imag;
   Grad_theta_dn_up_imag.function = &grad_theta_dn_up_imag;
   Grad_theta_dn_up_imag.params = &params;
-  gsl_integration_qags (&Grad_theta_dn_up_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_dn_up_imag, &error);
+  gsl_integration_qags (&Grad_theta_dn_up_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, limit, w, &result_grad_theta_dn_up_imag, &error);
 
-  results_t res { result_diag_real, result_diag_imag, result_up_dn_real, result_up_dn_imag, result_dn_up_real, result_dn_up_imag, result_grad_r_diag_real,result_grad_r_diag_imag, result_grad_r_up_dn_real,result_grad_r_up_dn_imag,result_grad_r_dn_up_real,result_grad_r_dn_up_imag,result_grad_theta_diag_real,result_grad_theta_diag_imag,result_grad_theta_up_dn_real,result_grad_theta_up_dn_imag,result_grad_theta_dn_up_real,result_grad_theta_dn_up_imag};
+  results_t res { result_diag_real, result_diag_imag, result_up_dn_real, result_up_dn_imag, result_dn_up_real, result_dn_up_imag, result_grad_r_up_dn_real,result_grad_r_up_dn_imag,result_grad_r_dn_up_real,result_grad_r_dn_up_imag,result_grad_theta_up_dn_real,result_grad_theta_up_dn_imag,result_grad_theta_dn_up_real,result_grad_theta_dn_up_imag};
   // std::cout << "abserr: "<<error <<std::endl;
   gsl_integration_workspace_free (w);
   return res;
 }
-
-
-results_t computeGreensFunctionEnergyIntegration(params_t params){
-  // Integration parameters
-  gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
-  double error;
-  double control = 1e-6;
-
-  double r = (params.r);
-  double theta_r = (params.theta_r);
-
-  double result_diag_real;
-  double result_diag_imag;
-  double result_up_dn_real;
-  double result_up_dn_imag;
-  double result_dn_up_real;
-  double result_dn_up_imag;
-
-  double result_grad_r_diag_real;
-  double result_grad_r_diag_imag;
-  double result_grad_r_up_dn_real;
-  double result_grad_r_up_dn_imag;
-  double result_grad_r_dn_up_real;
-  double result_grad_r_dn_up_imag;
-
-  double result_grad_theta_diag_real;
-  double result_grad_theta_diag_imag;
-  double result_grad_theta_up_dn_real;
-  double result_grad_theta_up_dn_imag;
-  double result_grad_theta_dn_up_real;
-  double result_grad_theta_dn_up_imag;
-
-  // std::cout << "computeGreensFunction() r = "<<r << ", theta_r = "<< theta_r << ", ke = "<< params.ke << ", tau = "<< params.tau << std::endl;
-    // Diagonal
-  gsl_function F_diag_real;
-  F_diag_real.function = &radial_diagonal_real;
-  F_diag_real.params = &params;
-  gsl_integration_qags (&F_diag_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_diag_real, &error);
-
-  gsl_function F_diag_imag;
-  F_diag_imag.function = &radial_diagonal_imag;
-  F_diag_imag.params = &params;
-  gsl_integration_qags (&F_diag_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_diag_imag, &error);
-
-  // Up - Down
-  gsl_function F_up_dn_real;
-  F_up_dn_real.function = &radial_up_dn_real;
-  F_up_dn_real.params = &params;
-  gsl_integration_qags (&F_up_dn_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_up_dn_real, &error);
-
-  gsl_function F_up_dn_imag;
-  F_up_dn_imag.function = &radial_up_dn_imag;
-  F_up_dn_imag.params = &params;
-  gsl_integration_qags (&F_up_dn_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_up_dn_imag, &error);
-
-  // Down - Up
-  gsl_function F_dn_up_real;
-  F_dn_up_real.function = &radial_dn_up_real;
-  F_dn_up_real.params = &params;
-  gsl_integration_qags (&F_dn_up_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_dn_up_real, &error);
-
-  gsl_function F_dn_up_imag;
-  F_dn_up_imag.function = &radial_dn_up_imag;
-  F_dn_up_imag.params = &params;
-  gsl_integration_qags (&F_dn_up_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_dn_up_imag, &error);
-
-
-
-  // Radial Gradients
-
-  gsl_function Grad_r_diag_real;
-  Grad_r_diag_real.function = &grad_r_diag_real;
-  Grad_r_diag_real.params = &params;
-  gsl_integration_qags (&Grad_r_diag_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_diag_real, &error);
-
-  gsl_function Grad_r_diag_imag;
-  Grad_r_diag_imag.function = &grad_r_diag_imag;
-  Grad_r_diag_imag.params = &params;
-  gsl_integration_qags (&Grad_r_diag_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_diag_imag, &error);
-
-  gsl_function Grad_r_up_dn_real;
-  Grad_r_up_dn_real.function = &grad_r_up_dn_real;
-  Grad_r_up_dn_real.params = &params;
-  gsl_integration_qags (&Grad_r_up_dn_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_up_dn_real, &error);
-
-  gsl_function Grad_r_up_dn_imag;
-  Grad_r_up_dn_imag.function = &grad_r_up_dn_imag;
-  Grad_r_up_dn_imag.params = &params;
-  gsl_integration_qags (&Grad_r_up_dn_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_up_dn_imag, &error);
-
-  gsl_function Grad_r_dn_up_real;
-  Grad_r_dn_up_real.function = &grad_r_dn_up_real;
-  Grad_r_dn_up_real.params = &params;
-  gsl_integration_qags (&Grad_r_dn_up_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_dn_up_real, &error);
-
-  gsl_function Grad_r_dn_up_imag;
-  Grad_r_dn_up_imag.function = &grad_r_dn_up_imag;
-  Grad_r_dn_up_imag.params = &params;
-  gsl_integration_qags (&Grad_r_dn_up_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_r_dn_up_imag, &error);
-   
-
-  // Angular Gradients
-
-  gsl_function Grad_theta_diag_real;
-  Grad_theta_diag_real.function = &grad_theta_diag_real;
-  Grad_theta_diag_real.params = &params;
-  gsl_integration_qags (&Grad_theta_diag_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_diag_real, &error);
-
-  gsl_function Grad_theta_diag_imag;
-  Grad_theta_diag_imag.function = &grad_theta_diag_imag;
-  Grad_theta_diag_imag.params = &params;
-  gsl_integration_qags (&Grad_theta_diag_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_diag_imag, &error);
-
-  gsl_function Grad_theta_up_dn_real;
-  Grad_theta_up_dn_real.function = &grad_theta_up_dn_real;
-  Grad_theta_up_dn_real.params = &params;
-  gsl_integration_qags (&Grad_theta_up_dn_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_up_dn_real, &error);
-
-  gsl_function Grad_theta_up_dn_imag;
-  Grad_theta_up_dn_imag.function = &grad_theta_up_dn_imag;
-  Grad_theta_up_dn_imag.params = &params;
-  gsl_integration_qags (&Grad_theta_up_dn_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_up_dn_imag, &error);
-
-  gsl_function Grad_theta_dn_up_real;
-  Grad_theta_dn_up_real.function = &grad_theta_dn_up_real;
-  Grad_theta_dn_up_real.params = &params;
-  gsl_integration_qags (&Grad_theta_dn_up_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_dn_up_real, &error);
-
-  gsl_function Grad_theta_dn_up_imag;
-  Grad_theta_dn_up_imag.function = &grad_theta_dn_up_imag;
-  Grad_theta_dn_up_imag.params = &params;
-  gsl_integration_qags (&Grad_theta_dn_up_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_grad_theta_dn_up_imag, &error);
-
-  results_t res { result_diag_real, result_diag_imag, result_up_dn_real, result_up_dn_imag, result_dn_up_real, result_dn_up_imag, result_grad_r_diag_real,result_grad_r_diag_imag, result_grad_r_up_dn_real,result_grad_r_up_dn_imag,result_grad_r_dn_up_real,result_grad_r_dn_up_imag,result_grad_theta_diag_real,result_grad_theta_diag_imag,result_grad_theta_up_dn_real,result_grad_theta_up_dn_imag,result_grad_theta_dn_up_real,result_grad_theta_dn_up_imag};
-  // std::cout << "abserr: "<<error <<std::endl;
-  gsl_integration_workspace_free (w);
-  return res;
-}
-
-results_t computeGreensFunctionLDOS(params_t params){
-  // Integration parameters
-  gsl_integration_workspace * w = gsl_integration_workspace_alloc (1000);
-  double error;
-  double control = 1e-6;
-
-  double r = (params.r);
-  double theta_r = (params.theta_r);
-
-  double result_diag_real = 0.0;
-  double result_diag_imag  = 0.0;
-  double result_up_dn_real  = 0.0;
-  double result_up_dn_imag  = 0.0;
-  double result_dn_up_real = 0.0;
-  double result_dn_up_imag = 0.0;
-
-  double result_grad_r_diag_real = 0.0;
-  double result_grad_r_diag_imag = 0.0;
-  double result_grad_r_up_dn_real = 0.0;
-  double result_grad_r_up_dn_imag = 0.0;
-  double result_grad_r_dn_up_real = 0.0;
-  double result_grad_r_dn_up_imag = 0.0;
-
-  double result_grad_theta_diag_real = 0.0;
-  double result_grad_theta_diag_imag = 0.0;
-  double result_grad_theta_up_dn_real = 0.0;
-  double result_grad_theta_up_dn_imag = 0.0;
-  double result_grad_theta_dn_up_real = 0.0;
-  double result_grad_theta_dn_up_imag = 0.0;
-
-  // std::cout << "computeGreensFunction() r = "<<r << ", theta_r = "<< theta_r << ", ke = "<< params.ke << ", tau = "<< params.tau << std::endl;
-    // Diagonal
-  gsl_function F_diag_real;
-  F_diag_real.function = &radial_diagonal_real;
-  F_diag_real.params = &params;
-  gsl_integration_qags (&F_diag_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_diag_real, &error);
-
-  gsl_function F_diag_imag;
-  F_diag_imag.function = &radial_diagonal_imag;
-  F_diag_imag.params = &params;
-  gsl_integration_qags (&F_diag_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_diag_imag, &error);
-
-  // Up - Down
-  gsl_function F_up_dn_real;
-  F_up_dn_real.function = &radial_up_dn_real;
-  F_up_dn_real.params = &params;
-  gsl_integration_qags (&F_up_dn_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_up_dn_real, &error);
-
-  gsl_function F_up_dn_imag;
-  F_up_dn_imag.function = &radial_up_dn_imag;
-  F_up_dn_imag.params = &params;
-  gsl_integration_qags (&F_up_dn_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_up_dn_imag, &error);
-
-  // Down - Up
-  gsl_function F_dn_up_real;
-  F_dn_up_real.function = &radial_dn_up_real;
-  F_dn_up_real.params = &params;
-  gsl_integration_qags (&F_dn_up_real, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_dn_up_real, &error);
-
-  gsl_function F_dn_up_imag;
-  F_dn_up_imag.function = &radial_dn_up_imag;
-  F_dn_up_imag.params = &params;
-  gsl_integration_qags (&F_dn_up_imag, theta_r-PI/2.0, theta_r+PI/2.0, 0, control, 1000, w, &result_dn_up_imag, &error);
-
-  results_t res { result_diag_real, result_diag_imag, result_up_dn_real, result_up_dn_imag, result_dn_up_real, result_dn_up_imag, result_grad_r_diag_real,result_grad_r_diag_imag, result_grad_r_up_dn_real,result_grad_r_up_dn_imag,result_grad_r_dn_up_real,result_grad_r_dn_up_imag,result_grad_theta_diag_real,result_grad_theta_diag_imag,result_grad_theta_up_dn_real,result_grad_theta_up_dn_imag,result_grad_theta_dn_up_real,result_grad_theta_dn_up_imag};
-  // std::cout << "abserr: "<<error <<std::endl;
-  gsl_integration_workspace_free (w);
-  return res;
-}
-
 
 
 // void output_parameters(std::ostream& output){
@@ -1031,10 +717,8 @@ int main (int argc, char* argv[])
           std::complex<double> G_diag (greens_functions.diag_real , greens_functions.diag_imag);
           std::complex<double> G_up_dn (greens_functions.up_dn_real , greens_functions.up_dn_imag);
           std::complex<double> G_dn_up (greens_functions.dn_up_real , greens_functions.dn_up_imag);
-          std::complex<double> Grad_r_diag (greens_functions.grad_r_diag_real , greens_functions.grad_r_diag_imag);
           std::complex<double> Grad_r_up_dn (greens_functions.grad_r_up_dn_real , greens_functions.grad_r_up_dn_imag);
           std::complex<double> Grad_r_dn_up (greens_functions.grad_r_dn_up_real , greens_functions.grad_r_dn_up_imag);
-          std::complex<double> Grad_theta_diag (greens_functions.grad_theta_diag_real , greens_functions.grad_theta_diag_imag);
           std::complex<double> Grad_theta_up_dn (greens_functions.grad_theta_up_dn_real , greens_functions.grad_theta_up_dn_imag);
           std::complex<double> Grad_theta_dn_up (greens_functions.grad_theta_dn_up_real , greens_functions.grad_theta_dn_up_imag);
 
@@ -1045,11 +729,13 @@ int main (int argc, char* argv[])
           std::complex<double> A_t_up_dn = ii*cos(theta_r)*std::exp(-ii*tau)- sin(theta_r)*std::exp(ii*tau);
           std::complex<double> A_t_dn_up = -ii*cos(theta_r)*std::exp(ii*tau)- sin(theta_r)*std::exp(-ii*tau);
 
-          double J_r_grad = (3.87405e-5/2.0)*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_r_dn_up*G_up_dn - Grad_r_up_dn*G_dn_up) );
-          double J_theta_grad = (3.87405e-5/2.0)*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_theta_dn_up*G_up_dn - Grad_theta_up_dn*G_dn_up) ); 
+          // Current in units of nA/nm.eV
 
-          double J_r_so = (3.87405e-5)*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_r_up_dn*G_dn_up - A_r_dn_up*G_up_dn) );
-          double J_theta_so = (3.87405e-5)*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
+          double J_r_grad = (38740.5/2.0)*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_r_dn_up*G_up_dn - Grad_r_up_dn*G_dn_up) );
+          double J_theta_grad = (38740.5/2.0)*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_theta_dn_up*G_up_dn - Grad_theta_up_dn*G_dn_up) ); 
+
+          double J_r_so = (38740.5)*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_r_up_dn*G_dn_up - A_r_dn_up*G_up_dn) );
+          double J_theta_so = (38740.5)*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
 
 
           // J_r +=  (J_r_grad + J_r_so)*(1.0/(exp(-beta*(energies[i]-(kf*kf))/(2.0*13.097767*eff_mass))))*dE;
@@ -1062,9 +748,9 @@ int main (int argc, char* argv[])
           // J_r +=  (J_r_grad)*dE;
           // J_theta +=  (J_theta_grad)*dE;
 
-          sz += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
-          sy += (-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
-          sx += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+           sx += (eff_mass*13.097767/(4.0*pow(M_PI,5)))*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          sy += (eff_mass*13.097767/(4.0*pow(M_PI,5)))*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          sz += (eff_mass*113.097767/(4.0*pow(M_PI,5)))*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
         
         }
         double J_x = J_r*cos(theta_r) - J_theta*sin(theta_r);
