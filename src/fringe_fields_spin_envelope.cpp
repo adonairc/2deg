@@ -44,13 +44,10 @@ int main (int argc, char* argv[])
 
   std::ifstream infile(argv[1]);
   std::ofstream field;
-  std::ofstream fdxsx;
-  std::ofstream fdysy;
+
 
   field.open("fringe_fields_spin_envelope.dat");
-  fdxsx.open("spin_derivative_dsx_dx.dat");
-  fdysy.open("spin_derivative_dsy_dy.dat");
-
+  
   std::vector<double> x_coords;
   std::vector<double> y_coords;
 
@@ -105,18 +102,18 @@ int main (int argc, char* argv[])
 
   // Field calculation cell
   int Ncell = 100;
-  double min_x_cell = -50.0;
-  double max_x_cell = 50.0;
-  double min_y_cell = -50.0;
-  double max_y_cell = 50.0;
+  double min_x_cell = -100.0;
+  double max_x_cell = 100.0;
+  double min_y_cell = -100.0;
+  double max_y_cell = 100.0;
   
   std::vector<double> xs_cell = linspace(min_x_cell,max_x_cell,Ncell);
   std::vector<double> ys_cell = linspace(min_y_cell,max_x_cell,Ncell);
 
   // To calculate the z-component of the B-field 
   std::vector<double> zs_cell;
-  double dz = 1e-4;
-  double height = 10.0 + d/2.0;  // 10 nm above the slab
+  double dz = dx;
+  double height = 20.0 + d/2.0;  // 10 nm above the slab
   zs_cell.push_back(height);
   zs_cell.push_back(height+dz);
 
@@ -175,15 +172,14 @@ int main (int argc, char* argv[])
       double bx = -(phi_dx - phi)/dx;
       double by = -(phi_dy - phi)/dy;
       double bz = -(phi_dz - phi)/dz;
-      field << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx*bx + by*by + bz*bz) << std::endl;
+      field << xs_cell[i] << "," << ys_cell[j] << "," << bx << "," << by << "," << bz << std::endl;
       // std::cout << xs_cell[i] << "," << ys_cell[j] << "," << sqrt(bx*bx + by*by + bz*bz) << std::endl;
 
     }
   }
 
   field.close();
-  fdxsx.close();
-  fdysy.close();
+
 
 
   return 0;

@@ -22,9 +22,13 @@ include_directories( ${Boost_INCLUDE_DIR} )
 #target_link_libraries(magmoment_mpi ${MPI_LIBRARIES})
 
 add_executable(ldos ldos.cpp)
+add_executable(utils utils.cpp)
+add_executable(orbital_mag_fft orbital_mag_fft.cpp)
 add_executable(magmoment magmoment.cpp)
 add_executable(fringe_fields_constant_mag fringe_fields_constant_mag.cpp)
 add_executable(fringe_fields_envelope fringe_fields_envelope.cpp)
+add_executable(fringe_field_line fringe_field_line.cpp)
+add_executable(fringe_field_spin_line fringe_field_spin_line.cpp)
 add_executable(fringe_fields_spin_envelope fringe_fields_spin_envelope.cpp)
 
 
@@ -33,3 +37,7 @@ target_link_libraries(magmoment GSL::gsl GSL::gslcblas Boost::mpi Boost::program
 target_link_libraries(fringe_fields_constant_mag GSL::gsl GSL::gslcblas)
 target_link_libraries(fringe_fields_envelope)
 target_link_libraries(fringe_fields_spin_envelope)
+target_link_libraries(fringe_field_line)
+target_link_libraries(fringe_field_spin_line)
+target_link_libraries(utils)
+target_link_libraries(orbital_mag_fft)

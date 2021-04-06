@@ -120,10 +120,10 @@ int main (int argc, char* argv[])
 
   // Field calculation cell
   int Ncell = 100;
-  double min_x_cell = -50.0;
-  double max_x_cell = 50.0;
-  double min_y_cell = -50.0;
-  double max_y_cell = 50.0;
+  double min_x_cell = -1500.0;
+  double max_x_cell = 1500.0;
+  double min_y_cell = -1500.0;
+  double max_y_cell = 1500.0;
   
   std::vector<double> xs_cell = linspace(min_x_cell,max_x_cell,Ncell);
   std::vector<double> ys_cell = linspace(min_y_cell,max_x_cell,Ncell);
@@ -131,7 +131,7 @@ int main (int argc, char* argv[])
   // To calculate the z-component of the B-field 
   std::vector<double> zs_cell;
   double dz = 1e-4;
-  double height = 10.0 + d/2.0;  // 10 nm above the slab
+  double height = 20.0 + d/2.0;  // 10 nm above the slab
   zs_cell.push_back(height);
   zs_cell.push_back(height+dz);
 

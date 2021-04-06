@@ -745,9 +745,14 @@ int main (int argc, char* argv[])
 
   // }
   
-  // Down - delta = 0 -> t_dn = 0
-  // Up  - delta pi/2 -> t_up = -2i
-  t_up = std::complex<double>(1.0,0.0);
+
+  // Energy-independent t-matrix
+
+  // Resonant scaterring
+  // Delta_down = pi/2 -> t_dn = 0
+  // Delta_up =  pi -> t_up = -2i
+
+  t_up = std::complex<double>(0.0,0.0);
   t_dn = std::complex<double>(-1.0,0.0);
 
 
@@ -1152,7 +1157,7 @@ int main (int argc, char* argv[])
     // double e_initial = -2.0*k0*k0/(2.0*13.097767*eff_mass);
     // double e_final = kef*kef/(2.0*13.097767*eff_mass);
     std::cout << "kf = " << kf << std::endl;
-    double Einitial = -13.097767*eff_mass*pow(alpha+beta,2)/2.0+0.00001;
+    double Einitial = -13.097767*eff_mass*pow(alpha+beta,2)/2.0+1e-8;
     // double Einitial = -2.0(*k0*k0);
     double Efinal = (kf*kf) ;
     std::vector<double> energies = linspace(Einitial,Efinal,EnergyPoints);
@@ -1202,11 +1207,13 @@ int main (int argc, char* argv[])
           std::complex<double> A_t_up_dn = ii*cos(theta_r)*std::exp(-ii*tau)- sin(theta_r)*std::exp(ii*tau);
           std::complex<double> A_t_dn_up = -ii*cos(theta_r)*std::exp(ii*tau)- sin(theta_r)*std::exp(-ii*tau);
 
-          double J_r_grad = (3874.05/2.0)*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_r_dn_up*G_up_dn - Grad_r_up_dn*G_dn_up) );
-          double J_theta_grad = (3874.05/2.0)*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_theta_dn_up*G_up_dn - Grad_theta_up_dn*G_dn_up) ); 
+          // Current in units of nA/nm.eV
 
-          double J_r_so = (3874.05)*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_r_up_dn*G_dn_up - A_r_dn_up*G_up_dn) );
-          double J_theta_so = (3874.05)*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
+          double J_r_grad = (38740.5/2.0)*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_r_dn_up*G_up_dn - Grad_r_up_dn*G_dn_up) );
+          double J_theta_grad = (38740.5/2.0)*(-1.0/PI)*std::imag(std::complex<double>(0,1)*(t_up-t_dn)*(Grad_theta_dn_up*G_up_dn - Grad_theta_up_dn*G_dn_up) ); 
+
+          double J_r_so = (38740.5)*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_r_up_dn*G_dn_up - A_r_dn_up*G_up_dn) );
+          double J_theta_so = (38740.5)*(-1.0/PI)*std::imag(k0*(t_up-t_dn)*G_diag*(A_t_up_dn*G_dn_up - A_t_dn_up*G_up_dn) ); 
 
 
           // J_r +=  (J_r_grad + J_r_so)*(1.0/(exp(-beta*(energies[i]-(kf*kf))/(2.0*13.097767*eff_mass))))*dE;
@@ -1219,9 +1226,11 @@ int main (int argc, char* argv[])
           // J_r +=  (J_r_grad)*dE;
           // J_theta +=  (J_theta_grad)*dE;
 
-          sz += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
-          sy += (-1.0/PI)*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
-          sx += (-1.0/PI)*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+
+          // In units of mu_bohr / nm^2
+          sx += (eff_mass*13.097767/(4.0*pow(M_PI,5)))*std::imag((t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          sy += (eff_mass*13.097767/(4.0*pow(M_PI,5)))*std::imag(-ii*(t_up-t_dn)*(G_diag*G_up_dn + G_diag*G_dn_up))*dE;
+          sz += (eff_mass*113.097767/(4.0*pow(M_PI,5)))*std::imag((t_up-t_dn)*(G_diag*G_diag + G_up_dn*G_dn_up))*dE;
         
         }
         double J_x = -(J_r*cos(theta_r) - J_theta*sin(theta_r));
@@ -1230,7 +1239,7 @@ int main (int argc, char* argv[])
         sum_orb += (x*J_y - y*J_x);
         sum_spin += sqrt(sx*sx + sy*sy + sz*sz);
         
-        fmag << x << "," << y << "," << (x*J_y - y*J_x) << std::endl; // In units of \mu_{B}.nm^{-2}
+        fmag << x << "," << y << "," << (0.000107827)*(x*J_y - y*J_x) << std::endl; // In units of \mu_{B}.nm^{-2}
         fspin << x << "," << y << "," << sx << "," << sy << "," << sz << std::endl;
         fj << x << "," << y << "," << J_x << "," << J_y  << std::endl;
         
@@ -1239,7 +1248,7 @@ int main (int argc, char* argv[])
     std::cout << "Current density written in " << filename_j << std::endl;
     std::cout << "Orbital magnetization written in " << filename << std::endl;
     std::cout << "Spin magnetization written in " << filename_spin << std::endl;
-    std::cout << "Total orbital magnetization = " <<sum_orb*1e-9 << std::endl;
+    std::cout << "Total orbital magnetization = " <<sum_orb<< std::endl;
     std::cout << "Total spin magnetization = " << sum_spin << std::endl;
     fmag.close();
     fspin.close();
